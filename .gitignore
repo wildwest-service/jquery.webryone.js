@@ -21,3 +21,5 @@
 # だけど .png だけは無視したくない
 # img/*.*
 # !.png
+jquery.webryone.sublime-project
+jquery.webryone.sublime-workspace

@@ -87,7 +87,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
          * #ブラウザを判別。ブラウザ名を返す。
          * @return {String} "Chrome" or "Safari" or "Firefox" or "Opera" or "Gecko" or "IE" or Android or iOSdevice or touchPad or null
          */
-        checkBrowser: function () {
+        getBrowser: function () {
             var ua = window.navigator.userAgent;
             if      ( /chrome/i.test(ua) )   { return "Chrome";  }
             else if ( /safari/i.test(ua) )   { return "Safari";  }
@@ -105,7 +105,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
          * #モバイル判定。真偽値を返す。
          * @return {Boolean} true or false
          */
-        checkMobile: function () {
+        isMobile: function () {
             var ua = window.navigator.userAgent;
             return (ua.indexOf("iPhone") > -1 || ua.indexOf("iPad") > -1 || ua.indexOf("Android") > -1);
         },
@@ -115,7 +115,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
          * @return {String} "-webkit-" or "-moz-" or "-o-" or "-ms-" or null
          */
         vendorPrefix: function () {
-            switch ( this.checkBrowser() ) {
+            switch ( this.getBrowser() ) {
                 case "Android"   : return "-webkit-"; break;
                 case "iOSdevice" : return "-webkit-"; break;
                 case "touchPad"  : return "-webkit-"; break;
@@ -487,11 +487,16 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
 
     /**
      * #セレクターから指定したクラスを削除し、クリックした要素に指定したクラスを付与する
+     * 
      * $("button").toggleActiveClass({
      *     className:    "active",
      *     onTouch:      true,
      *     callback:     function (me, self, e) {}
      * });
+     *
+     * #設定したイベントをアンバインド
+     * $("button").toggleActiveClass("destroy");
+     * 
      * @param  {Object} option 上記オプションオブジェクト
      * @return {Object}        jQueryObject
      */

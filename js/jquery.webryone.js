@@ -545,19 +545,19 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
      * #画像の遅延ロード
      *
      * $("img").lazyLoad({
-     *     eventType:          "load",         //発火させるためのイベント
-     *     interval:           500,            //eventTypeがload時のロード間隔
-     *     delay:              1000,           //eventTypeがload時の発火するまでのディレイ
-     *     effect:             "fadeIn",       //ロード時のエフェクトタイプ
-     *     effectDuration:     1000,           //エフェクトにかける時間
-     *     easing:             "linear",       //イージングタイプ
-     *     effectCallBack:     function () {}, //エフェクト後に実行するコールバック
-     *     useLoadingImage:    true,           //ローティングイメージの表示・非表示
-     *     loadingImageSrc:    loadingImage,   //ローディングイメージのソース(パスかbase64形式で指定)
-     *     notLazySelecter:    ".notLazy",     //対象外の要素を含むセレクターを指定
-     *     dataAttrName:       "data-src",     //遅延ロードさせる画像のパスを指定しておくためのdata属性の名前を指定
-     *     oneComplete:        function () {}, //ロード完了毎に実行するコールバック
-     *     complete:           function () {}  //すべてのロードが完了後に実行するコールバック
+     *     eventType:          "load",                  //発火させるためのイベント
+     *     interval:           500,                     //eventTypeがload時のロード間隔
+     *     delay:              0,                       //eventTypeがload時の発火するまでのディレイ
+     *     effect:             "fadeIn",                //ロード時のエフェクトタイプ
+     *     effectDuration:     500,                     //エフェクトにかける時間
+     *     easing:             "linear",                //イージングタイプ
+     *     effectCallBack:     function () {},          //エフェクト後に実行するコールバック
+     *     useLoadingImage:    true,                    //ローティングイメージの表示・非表示
+     *     loadingImageSrc:    "loadingImage.gif",      //ローディングイメージのソース(パスかbase64形式で指定)
+     *     notLazySelecter:    ".notLazy",              //対象外の要素を含むセレクターを指定
+     *     dataAttrName:       "data-src",              //遅延ロードさせる画像のパスを指定しておくためのdata属性の名前を指定
+     *     oneComplete:        function () {},          //ロード完了毎に実行するコールバック
+     *     complete:           function () {}           //すべてのロードが完了後に実行するコールバック
      * });
      * 
      * #設定したイベントをアンバインド
@@ -573,9 +573,9 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
             var _settings = $.extend({
                 eventType:          "load",         //発火させるためのイベント
                 interval:           500,            //eventTypeがload時のロード間隔
-                delay:              1000,           //eventTypeがload時の発火するまでのディレイ
+                delay:              0,              //eventTypeがload時の発火するまでのディレイ
                 effect:             "fadeIn",       //ロード時のエフェクトタイプ
-                effectDuration:     1000,           //エフェクトにかける時間
+                effectDuration:     500,            //エフェクトにかける時間
                 easing:             "linear",       //イージングタイプ
                 effectCallBack:     function () {}, //エフェクト後に実行するコールバック
                 useLoadingImage:    true,           //ローティングイメージの表示・非表示
@@ -593,7 +593,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
 
             //指定されたイベントがscrollなら、
             if ( _settings.eventType === "scroll" ) {
-                this.each(function (idx) {
+                return this.each(function (idx) {
                     var preloadImageArr = [];
                     preloadImageArr[0] = $(this).attr(_settings.dataAttrName);
 
@@ -606,79 +606,122 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                         });
                     }
 
-                    // メイン
-                    $(window).on("scroll.lazyLoad", function () {   //windowスクロール時
-                        var
-                            scrollTop = $(window).scrollTop(),
-                            bottomTop = scrollTop + $(window).height();
+                    // メイン処理
+                    if ( $(window).height() >= $(that).offset().top ) { //最初から要素の上部が、window内にある場合、
+                        $(window).on("load.lazyLoad_beforeScroll", function () {
+                            setTimeout(function () { _lazy(that, idx); }, 0);
+                        });
+                    } else {
+                        $(window).on("scroll.lazyLoad", function () {   //windowスクロール時
+                            var
+                                scrollTop = $(window).scrollTop(),
+                                bottomTop = scrollTop + $(window).height();
 
-                        if ( bottomTop >= $(that).offset().top ) {  //window下が要素の上部にきたら、
-                            if ( !$(that).parents(_settings.notLazySelecter)[0] ) {   //指定した例外要素を除いて、
-                                // ロード中のクラスがなければ、
-                                (!$(that).attr("class").match(/wo-lazyLoading/))
-                                &&
-                                // ローディングイメージ表示
-                                ( (_settings.useLoadingImage) && (that.src = _settings.loadingImageSrc) )
-                                &&
-                                // ロード中のクラス付与
-                                $(that).addClass("wo-lazyLoading");
+                            if ( bottomTop >= $(that).offset().top ) {  //window下が要素の上部にきたら、
+                                if ( !$(that).parents(_settings.notLazySelecter)[0] ) {   //指定した例外要素を除いて、
+                                    // ロード中のクラスがなければ、
+                                    (!$(that).attr("class").match(/wo-lazyLoading/))
+                                    &&
+                                    // ローディングイメージ表示
+                                    (
+                                        (_settings.useLoadingImage)
+                                        &&
+                                        ($(that).wrap($('<div style="position:relative; width:100%; height:26px;">')))
+                                        &&
+                                        ($(that).css({width:"26px", height:"26px", position:"absolute", top:0, left:Math.floor($(that).width()/2-13)+"px"}))
+                                        &&
+                                        (that.src = _settings.loadingImageSrc)
+                                    )
+                                    &&
+                                    // ロード中のクラス付与
+                                    $(that).addClass("wo-lazyLoading");
 
-                                // ロード完了のクラスがなければ、
-                                (!$(that).attr("class").match(/wo-lazyLoaded/))
-                                &&
-                                // 画像をロード
-                                $.preloadImages( preloadImageArr, function () {
-                                    // 画像を非表示
-                                    $(that).hide();
-                                    // ロード完了後に画像を差し替え
-                                    that.src = preloadImageArr[0];
-                                    // 画像を表示
-                                    $(that)[_settings.effect](_settings.effectDuration, _settings.easing, _settings.effectCallBack);
-                                    // ロード完了のクラスを付与
-                                    $(that).addClass("wo-lazyLoaded");
-                                    // ロード完了毎に実行するコールバック
-                                    _settings.oneComplete();
-                                    // すべてのロードが完了後に実行するコールバック
-                                    if ( idx >= self.length-1 ) {
-                                        _settings.complete();
-                                        $(window).off(".lazyLoad");
-                                    }
-                                });
+                                    // ロード完了のクラスがなければ、
+                                    (!$(that).attr("class").match(/wo-lazyLoaded/))
+                                    &&
+                                    // 画像をロード
+                                    $.preloadImages( preloadImageArr, function () {
+                                        // 画像を非表示
+                                        $(that).hide();
+
+                                        // ロード完了後に画像を差し替え
+                                        that.src = preloadImageArr[0];
+
+                                        // ローディングイメージ表示時に設定したスタイルをリセット
+                                        $(that).css({
+                                            width:      "",
+                                            height:     "",
+                                            position:   "",
+                                            top:        "",
+                                            left:       ""
+                                        });
+
+                                        // ローディングイメージ表示時にラップしたdivを削除
+                                        $(that).unwrap();
+
+                                        // 画像を表示
+                                        $(that)[_settings.effect](_settings.effectDuration, _settings.easing, _settings.effectCallBack);
+
+                                        // ロード完了のクラスを付与
+                                        $(that).addClass("wo-lazyLoaded");
+
+                                        // ロード完了毎に実行するコールバック
+                                        _settings.oneComplete();
+
+                                        // すべてのロードが完了後に実行するコールバック
+                                        if ( idx >= self.length-1 ) {
+                                            _settings.complete();
+                                            $(window).off(".lazyLoad");
+                                        }
+                                    });
+                                }
                             }
+                        });
+                    }
+                });
+            } else {
+                //指定イベントがscroll以外の場合
+                return this.each(function (idx) {
+                    var
+                        that = this,
+                        preloadImageArr = [];
+
+                    preloadImageArr[0] = $(that).attr(_settings.dataAttrName);
+
+                    //対象外の要素の処理
+                    if ( $(that).parents(_settings.notLazySelecter)[0] ) {
+                        $.preloadImages(preloadImageArr, preloadCallBack);
+                        function preloadCallBack() {
+                            that.src = $(that).attr(_settings.dataAttrName);
                         }
+                    }
+
+                    $(window).on(_settings.eventType+".lazyLoad", function () {
+                        setTimeout(function () { _lazy(that, idx); }, interval);
+                        interval += _settings.interval;
                     });
                 });
-
-                return this;
             }
-
-            //指定イベントがscroll以外の場合
-            return this.each(function (idx) {
-                var
-                    that = this,
-                    preloadImageArr = [];
-
-                preloadImageArr[0] = $(that).attr(_settings.dataAttrName);
-
-                //対象外の要素の処理
-                if ( $(that).parents(_settings.notLazySelecter)[0] ) {
-                    $.preloadImages(preloadImageArr, preloadCallBack);
-                    function preloadCallBack() {
-                        that.src = $(that).attr(_settings.dataAttrName);
-                    }
-                }
-
-                $(window).on(_settings.eventType+".lazyLoad", function () {
-                    setTimeout(function () { _lazy(that, idx); }, interval);
-                    interval += _settings.interval;
-                });
-            });
 
             function _lazy(that, idx) {
                 //対象外の要素を除いた要素の処理
                 if ( !$(that).parents(_settings.notLazySelecter)[0] ) {
-                    // ローディングイメージを表示
-                    (_settings.useLoadingImage) && (that.src = _settings.loadingImageSrc);
+                    // ロード中のクラスがなければ、
+                    (!$(that).attr("class").match(/wo-lazyLoading/))
+                    &&
+                    (
+                        // ローディングイメージを表示
+                        (_settings.useLoadingImage)
+                        &&
+                        ($(that).wrap($('<div style="position:relative; width:100%; height:26px;">')))
+                        &&
+                        ($(that).css({width:"26px", height:"26px", position:"absolute", top:0, left:Math.floor($(that).width()/2-13)+"px"}))
+                        &&
+                        (that.src = _settings.loadingImageSrc)
+                    )
+                    &&
+                    // ロード中のクラス付与
+                    $(that).addClass("wo-lazyLoading");
 
                     var preloadImageArr = [];
                     preloadImageArr[0] = $(that).attr(_settings.dataAttrName);
@@ -691,8 +734,23 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                         // 画像を置換
                         that.src = preloadImageArr[0];
 
+                        // ローディングイメージ表示時に設定したスタイルをリセット
+                        $(that).css({
+                            width:      "",
+                            height:     "",
+                            position:   "",
+                            top:        "",
+                            left:       ""
+                        });
+
+                        // ローディングイメージ表示時にラップしたdivを削除
+                        $(that).unwrap();
+
                         // 画像を表示
                         $(that)[_settings.effect](_settings.effectDuration, _settings.easing, _settings.effectCallBack);
+
+                        // ロード完了のクラスを付与
+                        $(that).addClass("wo-lazyLoaded");
 
                         // ロード完了毎に実行するコールバック
                         _settings.oneComplete();
@@ -701,9 +759,13 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                         if ( idx >= self.length-1 ) {
                             _settings.complete();
                             $(window).off(".lazyLoad");
+                            $(window).off(".lazyLoad_beforeScroll");
                         }
                     };
                     
+                    // ロード完了のクラスがなければ、
+                    (!$(that).attr("class").match(/wo-lazyLoaded/))
+                    &&
                     setTimeout(function () { $.preloadImages(preloadImageArr, oneCompleteCallback); }, _settings.delay);
                 }
             }
@@ -712,6 +774,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
         destroy: function (options) {
             return this.each(function () {
                 $(window).off(".lazyLoad");
+                $(window).off(".lazyLoad_beforeScroll");
             });
         }
     };

@@ -396,7 +396,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
      * #一番高い要素の高さを返す
      * @return {Number} 一番高い要素の高さを返す
      */
-    $.fn.maxHeight = function () {
+    $.fn.getMaxHeight = function () {
 
         var max = 0;
 
@@ -545,9 +545,9 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
      * #画像の遅延ロード
      *
      * $("img").lazyLoad({
-     *     eventType:          "load",                  //発火させるためのイベント
+     *     eventType:          "scroll",                //発火させるためのイベント
      *     interval:           500,                     //eventTypeがload時のロード間隔
-     *     delay:              0,                       //eventTypeがload時の発火するまでのディレイ
+     *     delay:              500,                     //eventTypeがload時と、scrollで要素がウインドウ内にある要素の発火するまでのディレイ
      *     effect:             "fadeIn",                //ロード時のエフェクトタイプ
      *     effectDuration:     500,                     //エフェクトにかける時間
      *     easing:             "linear",                //イージングタイプ
@@ -571,9 +571,9 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
     lazyLoad.methods = {
         init: function (options) {
             var _settings = $.extend({
-                eventType:          "load",         //発火させるためのイベント
+                eventType:          "scroll",       //発火させるためのイベント
                 interval:           500,            //eventTypeがload時のロード間隔
-                delay:              0,              //eventTypeがload時の発火するまでのディレイ
+                delay:              500,            //eventTypeがload時と、scrollで要素がウインドウ内にある要素の発火するまでのディレイ
                 effect:             "fadeIn",       //ロード時のエフェクトタイプ
                 effectDuration:     500,            //エフェクトにかける時間
                 easing:             "linear",       //イージングタイプ
@@ -609,7 +609,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                     // メイン処理
                     if ( $(window).height() >= $(that).offset().top ) { //最初から要素の上部が、window内にある場合、
                         $(window).on("load.lazyLoad_beforeScroll", function () {
-                            setTimeout(function () { _lazy(that, idx); }, 0);
+                            setTimeout(function () { _lazy(that, idx); }, _settings.delay);
                         });
                     } else {
                         $(window).on("scroll.lazyLoad", function () {   //windowスクロール時

@@ -408,6 +408,59 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
     };
 
     /**
+     * #CSS3 transition
+     *
+     * $("div").css({
+     *     "background-color":   "red",
+     *     width:                "800px",
+     *     height:               "600px"
+     * })
+     * .transition({
+     *     property:           "width, height",
+     *     duration:           5000,
+     *     "timing-function":  "ease",
+     *     delay:              1000
+     * });
+     * 
+     * @param  {Object} option 上記transitionオプションオブジェクト
+     * @return {Object}        jQueryObject
+     */
+    var transition = {};
+
+    transition.methods = {
+        init: function (options) {
+            if ( !$.hasTransition() ) {
+                $.error("transitionプロパティが未対応です");
+                return this;
+            }
+
+            var _settings = $.extend({
+                property:           "",
+                duration:           500,
+                "timing-function":  "ease",
+                delay:              0
+            }, options);
+
+            return this.each(function () {
+                _transition(this);
+            });
+
+            function _transition(that) {
+                that.style[$.changeCss3PropToJsRef("transition")] = "";
+
+                that.style[$.changeCss3PropToJsRef("transition-property")]          = _settings.property;
+                that.style[$.changeCss3PropToJsRef("transition-duration")]          = _settings.duration+"ms";
+                that.style[$.changeCss3PropToJsRef("transition-timing-function")]   = _settings["timing-function"];
+                that.style[$.changeCss3PropToJsRef("transition-delay")]             = _settings.delay+"ms";
+            }
+        }
+    };
+
+    $.fn.transition = function (options) {
+        $._callMethods( transition, options, this );
+    };
+
+    /**
      * #ホバー時に指定の画像に差し替える（画像のロールオーバー）
      *
      * $("img").rollOverImg({
@@ -608,7 +661,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
 
                     // メイン処理
                     if ( $(window).height() >= $(that).offset().top ) { //最初から要素の上部が、window内にある場合、
-                        $(window).on("load.lazyLoad_beforeScroll", function () {
+                        $(document).on("load.lazyLoad_beforeScroll", function () {
                             setTimeout(function () { _lazy(that, idx); }, _settings.delay);
                         });
                     } else {
@@ -759,7 +812,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                         if ( idx >= self.length-1 ) {
                             _settings.complete();
                             $(window).off(".lazyLoad");
-                            $(window).off(".lazyLoad_beforeScroll");
+                            $(document).off(".lazyLoad_beforeScroll");
                         }
                     };
                     
@@ -774,7 +827,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
         destroy: function (options) {
             return this.each(function () {
                 $(window).off(".lazyLoad");
-                $(window).off(".lazyLoad_beforeScroll");
+                $(document).off(".lazyLoad_beforeScroll");
             });
         }
     };

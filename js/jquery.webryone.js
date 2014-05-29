@@ -626,7 +626,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
             var _settings = $.extend({
                 eventType:          "scroll",       //発火させるためのイベント
                 interval:           500,            //eventTypeがload時のロード間隔
-                delay:              0,              //eventTypeがload時と、scrollで要素がウインドウ内にある要素の発火するまでのディレイ
+                delay:              100,            //eventTypeがload時と、scrollで要素がウインドウ内にある要素の発火するまでのディレイ
                 effect:             "fadeIn",       //ロード時のエフェクトタイプ
                 effectDuration:     500,            //エフェクトにかける時間
                 easing:             "linear",       //イージングタイプ

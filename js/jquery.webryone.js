@@ -661,7 +661,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
 
                     // メイン処理
                     if ( $(window).height() >= $(that).offset().top ) { //最初から要素の上部が、window内にある場合、
-                        $(document).on("load.lazyLoad_beforeScroll", function () {
+                        $(window).on("load.lazyLoad_beforeScroll", function () {
                             setTimeout(function () { _lazy(that, idx); }, _settings.delay);
                         });
                     } else {
@@ -812,7 +812,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                         if ( idx >= self.length-1 ) {
                             _settings.complete();
                             $(window).off(".lazyLoad");
-                            $(document).off(".lazyLoad_beforeScroll");
+                            $(window).off(".lazyLoad_beforeScroll");
                         }
                     };
                     
@@ -827,7 +827,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
         destroy: function (options) {
             return this.each(function () {
                 $(window).off(".lazyLoad");
-                $(document).off(".lazyLoad_beforeScroll");
+                $(window).off(".lazyLoad_beforeScroll");
             });
         }
     };

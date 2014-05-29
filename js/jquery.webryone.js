@@ -626,7 +626,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
             var _settings = $.extend({
                 eventType:          "scroll",       //発火させるためのイベント
                 interval:           500,            //eventTypeがload時のロード間隔
-                delay:              500,            //eventTypeがload時と、scrollで要素がウインドウ内にある要素の発火するまでのディレイ
+                delay:              0,              //eventTypeがload時と、scrollで要素がウインドウ内にある要素の発火するまでのディレイ
                 effect:             "fadeIn",       //ロード時のエフェクトタイプ
                 effectDuration:     500,            //エフェクトにかける時間
                 easing:             "linear",       //イージングタイプ
@@ -678,8 +678,8 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                                     // ローディングイメージ表示
                                     (
                                         (_settings.useLoadingImage)
-                                        &&
-                                        ($(that).wrap($('<div style="position:relative; width:100%; height:26px;">')))
+                                        // &&
+                                        // ($(that).wrap($('<div style="position:relative; width:100%; height:26px;">')))
                                         &&
                                         ($(that).css({width:"26px", height:"26px", position:"absolute", top:0, left:Math.floor($(that).width()/2-13)+"px"}))
                                         &&
@@ -710,7 +710,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                                         });
 
                                         // ローディングイメージ表示時にラップしたdivを削除
-                                        $(that).unwrap();
+                                        // $(that).unwrap();
 
                                         // 画像を表示
                                         $(that)[_settings.effect](_settings.effectDuration, _settings.easing, _settings.effectCallBack);
@@ -765,8 +765,8 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                     (
                         // ローディングイメージを表示
                         (_settings.useLoadingImage)
-                        &&
-                        ($(that).wrap($('<div style="position:relative; width:100%; height:26px;">')))
+                        // &&
+                        // ($(that).wrap($('<div style="position:relative; width:100%; height:26px;">')))
                         &&
                         ($(that).css({width:"26px", height:"26px", position:"absolute", top:0, left:Math.floor($(that).width()/2-13)+"px"}))
                         &&
@@ -797,7 +797,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                         });
 
                         // ローディングイメージ表示時にラップしたdivを削除
-                        $(that).unwrap();
+                        // $(that).unwrap();
 
                         // 画像を表示
                         $(that)[_settings.effect](_settings.effectDuration, _settings.easing, _settings.effectCallBack);

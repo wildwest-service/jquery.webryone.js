@@ -419,7 +419,8 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
      *     property:           "width, height",
      *     duration:           5000,
      *     "timing-function":  "ease",
-     *     delay:              1000
+     *     delay:              1000,
+     *     complete:           function () {}
      * });
      * 
      * @param  {Object} option 上記transitionオプションオブジェクト
@@ -438,7 +439,8 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                 property:           "",
                 duration:           500,
                 "timing-function":  "ease",
-                delay:              0
+                delay:              0,
+                complete:           function () {}
             }, options);
 
             return this.each(function () {
@@ -452,6 +454,25 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                 that.style[$.changeCss3PropToJsRef("transition-duration")]          = _settings.duration+"ms";
                 that.style[$.changeCss3PropToJsRef("transition-timing-function")]   = _settings["timing-function"];
                 that.style[$.changeCss3PropToJsRef("transition-delay")]             = _settings.delay+"ms";
+                
+                // completeリスナー削除 & 実行
+                var __handle = function () {
+                    //削除
+                    $(that).off(".transitionEnd");
+                    
+                    //実行
+                    that.style[$.changeCss3PropToJsRef("transition")] = "";
+                    _settings.complete.apply(that);
+                };
+                
+                //リスナー登録
+                $(that).on("webkitTransitionEnd.transitionEnd", __handle);
+                $(that).on("MozTransitionEnd.transitionEnd", __handle);
+                $(that).on("mozTransitionEnd.transitionEnd", __handle);
+                $(that).on("msTransitionEnd.transitionEnd", __handle);
+                $(that).on("oTransitionEnd.transitionEnd", __handle);
+                $(that).on("transitionEnd.transitionEnd", __handle);
+                $(that).on("transitionend.transitionEnd", __handle);
             }
         }
     };
@@ -512,7 +533,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                         var finishPath = processedPathes[0]
                         $(me).on(overEvt+".rollOverImg", function () {
                             this.src = finishPath;
-                            _settings.onCallback();
+                            _settings.onCallback.apply(this);
                         });
                     })(that);
 
@@ -520,7 +541,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                         var initPath = me.src;
                         $(me).on(outEvt+".rollOverImg", function () {
                             this.src = initPath
-                            _settings.offCallback();
+                            _settings.offCallback.apply(this);
                         });
                     })(that);
                 };
@@ -546,7 +567,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
      * $("button").toggleActiveClass({
      *     className:    "active",
      *     onTouch:      true,
-     *     callback:     function (me, self, e) {}
+     *     callback:     function (these) {}
      * });
      *
      * #設定したイベントをアンバインド
@@ -562,7 +583,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
             var _settings = $.extend({
                 className: "active",
                 onTouch:   true,
-                callback:  function (me, self, e) {}
+                callback:  function (these) {}
             }, options);
 
             var self = this;
@@ -578,7 +599,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                     self.removeClass(_settings.className);
                     $(this).addClass(_settings.className);
 
-                    _settings.callback(this, self, e);
+                    _settings.callback.apply(this, self);
                 });
             }
         },
@@ -713,17 +734,17 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                                         // $(that).unwrap();
 
                                         // 画像を表示
-                                        $(that)[_settings.effect](_settings.effectDuration, _settings.easing, _settings.effectCallBack);
+                                        $(that)[_settings.effect](_settings.effectDuration, _settings.easing, function () { _settings.effectCallBack.apply(that); });
 
                                         // ロード完了のクラスを付与
                                         $(that).addClass("wo-lazyLoaded");
 
                                         // ロード完了毎に実行するコールバック
-                                        _settings.oneComplete();
+                                        _settings.oneComplete.apply(that);
 
                                         // すべてのロードが完了後に実行するコールバック
                                         if ( idx >= self.length-1 ) {
-                                            _settings.complete();
+                                            _settings.complete.apply(self);
                                             $(window).off(".lazyLoad");
                                         }
                                     });
@@ -800,17 +821,17 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                         // $(that).unwrap();
 
                         // 画像を表示
-                        $(that)[_settings.effect](_settings.effectDuration, _settings.easing, _settings.effectCallBack);
+                        $(that)[_settings.effect](_settings.effectDuration, _settings.easing, function () { _settings.effectCallBack.apply(that); });
 
                         // ロード完了のクラスを付与
                         $(that).addClass("wo-lazyLoaded");
 
                         // ロード完了毎に実行するコールバック
-                        _settings.oneComplete();
+                        _settings.oneComplete.apply(that);
 
                         // すべてのロードが完了後に実行するコールバック
                         if ( idx >= self.length-1 ) {
-                            _settings.complete();
+                            _settings.complete.apply(self);
                             $(window).off(".lazyLoad");
                             $(window).off(".lazyLoad_beforeScroll");
                         }

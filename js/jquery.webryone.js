@@ -408,6 +408,285 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
     };
 
     /**
+     * #レスポンシブサイドメニュー
+     *
+     * $("#responsiveSideMenu").responsiveSideMenu({
+     *     //全てオプション
+     *     showOriginal:       false,               //オリジナルのメニューを表示 or 非表示
+     *     enable3d:           true,                //3Dアニメーションの有効・無効(true or false)
+     *     rotateX:            "0deg",              //3Dアニメーション時の縦回転の角度(deg (例)-45degとか)
+     *     rotateY:            "66deg",             //3Dアニメーション時の横回転の角度(deg (例)45degだと45度)
+     *     transformOrigin:    "left center",       //3Dアニメーション時の起点軸(left centerだと0% 50%でも同じ)
+     *     perspective:        "3000px",            //3Dアニメーション時の奥行きの深さ
+     *     duration:           300,                 //サイドメニュー開閉にかける時間(ミリ秒)
+     *     delay:              0,                   //サイドバー開閉時のディレイ(ミリ秒)
+     *     easing:             "ease",              //アニメーションのイージング設定
+     *     windowBreakPoint:   "991px",             //レスポンシブデザイン切り替えウインドウ幅(px)
+     *     width:              "75%",               //サイドメニューの幅(% or px)
+     *     zIndex:             9999,                //サイドメニューのz-index値
+     *     overlayBgColor:     "#000",              //サイドメニュー開放時メイン部にかかるオーバーレイ色
+     *     overlayOpacity:     0.4,                 //上記オーバーレイの透明度
+     *     toggleElementId:    "#toggleWebryMenu",  //サイドメニュー開閉要素のid
+     *     contentsWrapperId:  "#pageWrapper",      //サイドメニューとメイン部を含むブロック要素(divとか)のid
+     *     completeOpened:     function () {},      //サイドバーが開いたときに実行される関数
+     *     completeClosed:     function () {}       //サイドバーが閉じたときに実行される関数
+     * });
+     * 
+     * @param  {Object} options 上記responsiveSideMenuオプションオブジェクト
+     * @return {Object}        jQueryObject
+     */
+    var responsiveSideMenu = {};
+
+    responsiveSideMenu.methods = {
+
+        init: function (options) {
+            var _settings = $.extend({
+                showOriginal:       false,
+                enable3d:           false,
+                rotateX:            "0deg",
+                rotateY:            "45deg",
+                transformOrigin:    "left center",
+                perspective:        "3000px",
+                duration:           500,
+                delay:              0,
+                easing:             "linear",
+                windowBreakPoint:   769,
+                width:              "65%",
+                position:           "absolute",
+                top:                0,
+                zIndex:             9999,
+                overlayBgColor:     "#000",
+                overlayOpacity:     0.4,
+                toggleElementId:    "#toggleResponsiveSideMenu",
+                contentsWrapperId:  "#pageWrapper",
+                func_open:          function(){},
+                func_close:         function(){}
+            }, options);
+
+            return this.each(function () {
+                _responsiveSideMenu(this);
+            });
+
+            function _responsiveSideMenu(that) {
+                var
+                    monitoringWindowExeFlag = false,
+                    newId,
+                    // CSS3プロパティをJSリファレンス名に変換
+                    transitionProp  = $.changeCss3PropToJsRef("transition"),
+                    transformProp   = $.changeCss3PropToJsRef("transform"),
+                    // メニュー開閉判定フラグ
+                    toggleOnFlag    = false;    //trueならサイドメニューを閉じる。falseならサイドメニューを開く。
+
+                // ウインドウリサイズ監視関数
+                function monitoringWindow() {
+                    if ( $(window).width() <= _settings.windowBreakPoint ) {    //指定したウインドウ幅以下の場合に
+                        if ( !monitoringWindowExeFlag ) {
+                            // 要素をクローン
+                            var cloneElem = $(that).clone();
+
+                            // 要素を非表示
+                            (!_settings.showOriginal)
+                            &&
+                            $(that).css("display", "none");
+                            
+                            // クローンした要素のIDを変更
+                            newId = cloneElem.attr("id") + "_WEBRYMENU";
+                            cloneElem.attr("id", newId);
+
+                            // クローンした要素をDOMに追加
+                            $("body").append(cloneElem);
+
+                            // DOMに追加した要素のstyleを設定
+                            $("#"+newId).css({
+                                width:          _settings.width,
+                                height:         $(window).height()+"px",
+                                "overflow-y":   "scroll",
+                                position:       _settings.position,
+                                top:            _settings.top,
+                                "z-index":      _settings.zIndex
+                            });
+
+                            ($.hasTouch()) && $("#"+newId).css("-webkit-overflow-scrolling", "touch");  //タッチデバイス時に慣性スクロールを有効にする
+
+                            monitoringWindowExeFlag = true;
+                        }
+
+                        $("#"+newId).css({
+                            left:   -$(window).width()+"px",    // 常にクローンした要素の右端を画面の左端に追従させる
+                            height: $(window).height()+"px" //常にクローンした要素の高さをウインドウの高さに合わせる
+                        });
+
+                        $("#"+_settings.contentsWrapperId.substr(1)+"_overlay").css({
+                            height: $(window).height()+"px" //常にオーバーレイ要素の高さをウインドウの高さに合わせる
+                        });
+
+                        (toggleOnFlag) && toggleSideMenu(); //サイドメニューが開いているときにサイドメニューを閉じる
+
+                    } else {    //指定したウインドウ幅以上の場合に
+                        if ( monitoringWindowExeFlag ) {
+                            // サイドメニューの要素を削除
+                            $("#"+newId).remove();
+
+                            // 要素を表示
+                            that.css("display", "block");
+
+                            monitoringWindowExeFlag = false;
+                        }
+                    }
+                }
+
+                // メニュー開閉関数
+                function toggleSideMenu() {
+                    // ページラッパーにオーバーレイ
+                    if ( !toggleOnFlag ) {  //サイドメニュー開いたとき
+                        // ドキュメントスクロール禁止
+                        $("body").css("overflow", "hidden");
+
+                        // 要素を生成
+                        var dom = $("<div id='"+_settings.contentsWrapperId.substr(1)+"_overlay"+"' style='display: none;'>");
+                        // 生成した要素をページラッパー内に追加
+                        $(_settings.contentsWrapperId).append(dom);
+                        // 追加した要素のstyleを設定
+                        $("#"+_settings.contentsWrapperId.substr(1)+"_overlay").css({
+                            position:           "absolute",
+                            "z-index":          _settings.zIndex,
+                            top:                0,
+                            left:               0,
+                            width:              "100%",
+                            height:             ( $(_settings.contentsWrapperId).height() <= $(window).height() ) ? $(window).height()+"px" : $(_settings.contentsWrapperId).height()+"px",
+                            "background-color": _settings.overlayBgColor,
+                            opacity:            _settings.overlayOpacity
+                        })
+                        .fadeIn(_settings.duration);  // fadeIn
+
+                        var windowScrollTop = $(window).scrollTop();    //ウインドウのスクロールトップ値
+
+                        // サイドメニューとオーバーレイの上端をウインドウの上端にする
+                        $("#"+_settings.contentsWrapperId.substr(1)+"_overlay").css("top", windowScrollTop+"px"); // オーバーレイ
+                        $("#"+newId).css("top", windowScrollTop+"px");  // サイドメニュー
+
+                    } else {    //サイドメニュー閉じたとき
+                        // ドキュメントスクロール許可
+                        $("body").css("overflow", "visible");
+
+                        $("#"+_settings.contentsWrapperId.substr(1)+"_overlay")
+                        .fadeOut(_settings.duration, function () {    // fadeOut
+                            $(this).remove();   //削除
+                        });
+                    }
+
+                    // ページラッパーをアニメーション
+                    var transformValue,
+                    pageWrapperSlidePx = (toggleOnFlag) ? ("0px"): ($("#"+newId).width()+"px");
+
+                    if ( $.has3d() ) {    //3D系対応なら
+                        if ( _settings.enable3d ) {   //3dオプション trueなら
+
+                            transformValue
+                            = (toggleOnFlag)
+                            ? "translateX(0px) rotateX(0deg) rotateY(0deg)"
+                            : "translateX("+pageWrapperSlidePx+") rotateX("+_settings.rotateX+") rotateY("+_settings.rotateY+")";
+
+                            // 3Dプロパティを適用
+                            $(_settings.contentsWrapperId).parent()[0].style[$.changeCss3PropToJsRef("perspective")] = _settings.perspective;
+                            $(_settings.contentsWrapperId)[0].style[$.changeCss3PropToJsRef("transform-style")]      = "preserve-3d";
+                            $(_settings.contentsWrapperId)[0].style[$.changeCss3PropToJsRef("transform-origin")]     = _settings.transformOrigin;
+                            
+                        } else {    //3dオプション falseなら
+                            transformValue = "translateX("+pageWrapperSlidePx+")";
+                        }
+
+                        // CSS3アニメーション
+                        $(_settings.contentsWrapperId)[0].style[transformProp]    = transformValue;
+                        $(_settings.contentsWrapperId)[0].style[transitionProp]   = $.vendorPrefix()+"transform"+" "+_settings.duration+"ms"+" "+_settings.delay+"ms"+" "+_settings.easing;
+                    } else {    //3D未対応なら
+                        //jQueryアニメーション
+                        $(_settings.contentsWrapperId).animate(
+                        {
+                            left: pageWrapperSlidePx
+                        },
+                        {
+                            duration: _settings.duration,
+                            delay:    _settings.delay,
+                            easing:   _settings.easing
+                        });
+                    }
+
+                    // サイドメニューをアニメーション
+                    var sideMenuSlidePx = (toggleOnFlag) ? (parseInt($("#"+newId).css("left"), 10)+"px"): (-parseInt($("#"+newId).css("left"), 10)+"px");
+
+                    // コールバック関数
+                    var callbackFunc = ( !toggleOnFlag ) ? _settings.func_open : _settings.func_close;
+
+                    if ( $.has3d() ) {    //3D系対応なら
+                        // コールバックを削除 & 実行
+                        var _handle = function () {
+                            // コールバックを削除
+                            $("#"+newId).off( "webkitTransitionEnd", _handle );
+                            $("#"+newId).off(    "MozTransitionEnd", _handle );
+                            $("#"+newId).off(    "mozTransitionEnd", _handle );
+                            $("#"+newId).off(     "msTransitionEnd", _handle );
+                            $("#"+newId).off(      "oTransitionEnd", _handle );
+                            $("#"+newId).off(       "transitionEnd", _handle );
+                            $("#"+newId).off(       "transitionend", _handle );
+                            // コールバックを実行
+                            ( typeof callbackFunc === "function" ) && callbackFunc();
+                        };
+                        // コールバックを登録
+                        $("#"+newId).on( "webkitTransitionEnd", _handle );
+                        $("#"+newId).on(    "MozTransitionEnd", _handle );
+                        $("#"+newId).on(    "mozTransitionEnd", _handle );
+                        $("#"+newId).on(     "msTransitionEnd", _handle );
+                        $("#"+newId).on(      "oTransitionEnd", _handle );
+                        $("#"+newId).on(       "transitionEnd", _handle );
+                        $("#"+newId).on(       "transitionend", _handle );
+                        
+                        // CSS3アニメーション
+                        $("#"+newId)[0].style[transformProp]    = "translateX("+sideMenuSlidePx+")";
+                        $("#"+newId)[0].style[transitionProp]   = $.vendorPrefix()+"transform"+" "+_settings.duration+"ms"+" "+_settings.delay+"ms"+" "+_settings.easing;
+                    } else {    //3D未対応なら
+                        //jQueryアニメーション
+                        $("#"+newId).animate(
+                        {
+                            left: (toggleOnFlag) ? (-$("#"+newId).width()+"px"): "0px"
+                        },
+                        {
+                            duration: _settings.duration,
+                            delay:    _settings.delay,
+                            easing:   _settings.easing,
+                            complete: function () { ( typeof callbackFunc === "function" ) && callbackFunc(); }
+                        });
+                    }
+
+                    toggleOnFlag = (toggleOnFlag) ? false: true;
+
+                    if ( toggleOnFlag ) {   //サイドメニューを開いたとき
+                        if ( $.hasTouch() ) {   //タッチデバイスなら
+                            // ドキュメントスクロール禁止
+                            $("#"+_settings.contentsWrapperId.substr(1)+"_overlay").one( "touchmove.noScroll_overlay", function (e) {
+                                e.preventDefault();
+                            });
+                        }
+
+                        // ページラッパー領域をクリック時にサイドメニューを閉じるイベントを設定
+                        $("#"+_settings.contentsWrapperId.substr(1)+"_overlay").one( $.clickEvt(), toggleSideMenu );
+                    }
+                }
+
+                // メイン
+                $(window).one( "load", monitoringWindow );    // ウインドウ読み込み監視
+                $(window).on( $.resizeEvt(), monitoringWindow );    // ウインドウリサイズ監視
+
+                $(_settings.toggleElementId).on( $.clickEvt(), toggleSideMenu );    // トグルボタンのイベントハンドラ
+            }
+        }
+    };
+
+    $.fn.responsiveSideMenu = function (options) {
+        $._callMethods( responsiveSideMenu, options, this );
+    };
+
+    /**
      * #CSS3 transition
      *
      * $("div").css({

@@ -683,7 +683,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
     };
 
     $.fn.responsiveSideMenu = function (options) {
-        $._callMethods( responsiveSideMenu, options, this );
+        return $._callMethods( responsiveSideMenu, options, this );
     };
 
     /**
@@ -757,7 +757,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
     };
 
     $.fn.transition = function (options) {
-        $._callMethods( transition, options, this );
+        return $._callMethods( transition, options, this );
     };
 
     /**
@@ -837,7 +837,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
     };
 
     $.fn.rollOverImg = function (options) {
-        $._callMethods( rollOverImg, options, this );
+        return $._callMethods( rollOverImg, options, this );
     };
 
     /**
@@ -891,7 +891,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
     };
 
     $.fn.toggleActiveClass = function (options) {
-        $._callMethods( toggleActiveClass, options, this );
+        return $._callMethods( toggleActiveClass, options, this );
     };
 
     /**
@@ -1133,7 +1133,222 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
     };
 
     $.fn.lazyLoad = function (options) {
-        $._callMethods( lazyLoad, options, this );
+        return $._callMethods( lazyLoad, options, this );
+    };
+
+    /**
+     * #立方体を生成
+     *
+     * <div class="cube">
+     *      <div class="panel back-panel">後</div>
+     *      <div class="panel front-panel">前</div>
+     *      <div class="panel bottom-panel">下</div>
+     *      <div class="panel top-panel">上</div>
+     *      <div class="panel left-panel">左</div>
+     *      <div class="panel right-panel">右</div>
+     *  </div>
+     * 
+     * $(".cube").createCube({
+     *     backPanel:          ".back-panel",
+     *     frontPanel:         ".front-panel",
+     *     bottomPanel:        ".bottom-panel",
+     *     topPanel:           ".top-panel",
+     *     leftPanel:          ".left-panel",
+     *     rightPanel:         ".right-panel",
+     *     perspective:        "800px",
+     *     perspectiveOrigin:  "50% 50%",
+     *     width:              "200px",
+     *     height:             "200px",
+     *     top:                "160px",
+     *     backfaceVisibility: "visible",
+     *     angleOfCube:        "rotateY(45deg)",
+     *     responsive:         false,
+     *     callback:           function () {}
+     * });
+     * 
+     * @param  {Object} option 上記オプションオブジェクト
+     * @return {Object}        jQueryObject
+     */
+    var createCube = {};
+
+    createCube.methods = {
+
+        init: function (options) {
+            var _settings = $.extend({
+                backPanel:          ".back-panel",
+                frontPanel:         ".front-panel",
+                bottomPanel:        ".bottom-panel",
+                topPanel:           ".top-panel",
+                leftPanel:          ".left-panel",
+                rightPanel:         ".right-panel",
+                perspective:        "800px",
+                perspectiveOrigin:  "50% 50%",
+                width:              "200px",
+                height:             "200px",
+                top:                "160px",
+                backfaceVisibility: "visible",
+                angleOfCube:        "rotateY(45deg)",
+                responsive:         false,
+                callback:           function () {}
+            }, options);
+
+            return this.each(function () {
+                _createCube(this);
+            });
+
+            function _createCube(that) {
+                var $panelElems = $(that).children();
+                var cubeElem = that;
+                var cubeInnerElem = $(that).wrap("<div>").parent()[0];
+                var cubeWrapperElem = $(cubeInnerElem).wrap("<div>").parent()[0];
+
+                function setParams() {
+                    if (_settings.responsive) {
+                        _settings.perspective = Math.floor( $(window).width()/2 )+"px";
+                        _settings.width = $(window).width()+"px";
+                        _settings.height = $(window).width()+"px";
+                    }
+
+                    cubeWrapperElem.style["width"] = "100%";
+                    cubeWrapperElem.style[$.changeCss3PropToJsRef("perspective")] = _settings.perspective;
+                    cubeWrapperElem.style[$.changeCss3PropToJsRef("perspective-origin")] = _settings.perspectiveOrigin;
+
+                    cubeInnerElem.style["width"] = "100%";
+                    cubeInnerElem.style[$.changeCss3PropToJsRef("transform-style")] = "preserve-3d";
+                    
+                    cubeElem.style["margin"] = "0 auto";
+                    cubeElem.style["position"] = "relative";
+                    cubeElem.style["top"] = _settings.top;
+                    cubeElem.style["width"] = _settings.width;
+                    cubeElem.style["height"] = _settings.height;
+                    cubeElem.style[$.changeCss3PropToJsRef("transform-style")] = "preserve-3d";
+
+                    $panelElems.each(function (idx) {
+                        $(this).css({
+                            height:     _settings.height,
+                            width:      _settings.width,
+                            position:   "absolute"
+                        });
+
+                        this.style[$.changeCss3PropToJsRef("backface-visibility")] = _settings.backfaceVisibility;
+                    });
+
+                    var floor = Math.floor;
+
+                    $(_settings.frontPanel)[0].style[$.changeCss3PropToJsRef("transform")] = "translateZ("+floor(parseInt(_settings.width, 10)/2)+"px)";
+                    $(_settings.backPanel)[0].style[$.changeCss3PropToJsRef("transform")] = "rotateY(180deg) translateZ("+floor(parseInt(_settings.width, 10)/2)+"px)";
+                    $(_settings.leftPanel)[0].style[$.changeCss3PropToJsRef("transform")] = "rotateY(-90deg) translateZ("+floor(parseInt(_settings.width, 10)/2)+"px)";
+                    $(_settings.rightPanel)[0].style[$.changeCss3PropToJsRef("transform")] = "rotateY(90deg) translateZ("+floor(parseInt(_settings.width, 10)/2)+"px)";
+                    $(_settings.topPanel)[0].style[$.changeCss3PropToJsRef("transform")] = "rotateX(90deg) translateZ("+floor(parseInt(_settings.height, 10)/2)+"px)";
+                    $(_settings.bottomPanel)[0].style[$.changeCss3PropToJsRef("transform")] = "rotateX(-90deg) translateZ("+floor(parseInt(_settings.height, 10)/2)+"px)";
+                }
+
+                function init() {
+                    setParams();
+
+                    (_settings.responsive)
+                    &&
+                    $(window).on($.resizeEvt()+".createCube", setParams);
+
+                    cubeElem.style[$.changeCss3PropToJsRef("transform")] = _settings.angleOfCube;
+
+                    _settings.callback.call(cubeElem);
+                }
+
+                init();
+            }
+        }
+    };
+
+    $.fn.createCube = function (options) {
+        return $._callMethods( createCube, options, this );
+    };
+
+    var createRoom = {};
+
+    createRoom.methods = {
+
+        init: function (options) {
+
+            return this.each(function () {
+                _createRoom(this);
+            });
+
+            function _createRoom(that) {
+                var cubeElem = that;
+
+                function fixPanels(params) {
+                    var
+                        initRotateY = params.initRotateY,
+                        initTranslateZ = params.initTranslateZ,
+                        $backPanel = $(params.backPanel),
+                        $frontPanel = $(params.frontPanel),
+                        $bottomPanel = $(params.bottomPanel),
+                        $topPanel = $(params.topPanel),
+                        $leftPanel = $(params.leftPanel),
+                        $rightPanel = $(params.rightPanel),
+                        frontPanelWidth = params.frontPanelWidth,
+                        frontPanelHeight = params.frontPanelHeight,
+                        responsive = params.responsive;
+
+                    var that = {
+                        init: function () {
+                            if (responsive) {
+                                frontPanelWidth = Math.floor($(window).width()/1)+"px";
+                                frontPanelHeight = Math.floor($(window).height()/1)+"px";
+                                initTranslateZ = Math.floor($(window).width()/2)+"px";
+                            }
+
+                            // cubeElem.style[$.changeCss3PropToJsRef("transform")] = "rotateY(" + initRotateY + ") translateZ(" + initTranslateZ + ")";
+                            
+                            $frontPanel[0].style[$.changeCss3PropToJsRef("transform")] = "translateZ(" + Math.floor( -parseInt(initTranslateZ, 10)/4 )+"px" + ")";
+                            $frontPanel[0].style["width"] = frontPanelWidth;
+                            $frontPanel[0].style["height"] = frontPanelHeight;
+
+                            $backPanel[0].style[$.changeCss3PropToJsRef("transform")] = "rotateY(0deg) translateZ(" + -parseInt(initTranslateZ, 10)+"px" + ")";
+
+                            $topPanel[0].style[$.changeCss3PropToJsRef("transform")] = "rotateX(-90deg) translateZ(" + -parseInt(initTranslateZ, 10)+"px" + ")";
+                            $bottomPanel[0].style[$.changeCss3PropToJsRef("transform")] = "rotateX(90deg) translateZ(" + -parseInt(initTranslateZ, 10)+"px" + ")";
+
+                            $leftPanel[0].style[$.changeCss3PropToJsRef("transform")] = "rotateY(90deg) translateZ(" + -parseInt(initTranslateZ, 10)+"px" + ")";
+                            $rightPanel[0].style[$.changeCss3PropToJsRef("transform")] = "rotateY(-90deg) translateZ(" + -parseInt(initTranslateZ, 10)+"px" + ")";
+                        }
+                    };
+
+                    return that;
+                }
+
+                function init() {
+                    var _settings = $.extend({
+                        initRotateY:        "0deg",
+                        initTranslateZ:     Math.floor($(window).width()/2)+"px",
+                        backPanel:          ".back-panel",
+                        frontPanel:         ".front-panel",
+                        bottomPanel:        ".bottom-panel",
+                        topPanel:           ".top-panel",
+                        leftPanel:          ".left-panel",
+                        rightPanel:         ".right-panel",
+                        frontPanelWidth:    Math.floor($(window).width()/1)+"px",
+                        frontPanelHeight:   Math.floor($(window).height()/1)+"px",
+                        responsive:         true
+                    }, options);
+
+                    var that = fixPanels(_settings);
+
+                    that.init();
+
+                    (_settings.responsive)
+                    &&
+                    $(window).on($.resizeEvt()+".createRoom", that.init);
+                }
+
+                init();
+            }
+        }
+    };
+
+    $.fn.createRoom = function (options) {
+        return $._callMethods( createRoom, options, this );
     };
 
 })(jQuery);

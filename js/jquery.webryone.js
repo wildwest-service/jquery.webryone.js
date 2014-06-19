@@ -1287,24 +1287,20 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                         $topPanel = $(params.topPanel),
                         $leftPanel = $(params.leftPanel),
                         $rightPanel = $(params.rightPanel),
-                        frontPanelWidth = params.frontPanelWidth,
-                        frontPanelHeight = params.frontPanelHeight,
+                        $toLeftButton = $(params.toLeftButton),
+                        $toRightButton = $(params.toRightButton),
                         responsive = params.responsive;
+                        draggable = params.draggable;
 
                     var that = {
                         init: function () {
                             if (responsive) {
-                                frontPanelWidth = Math.floor($(window).width()/1)+"px";
-                                frontPanelHeight = Math.floor($(window).height()/1)+"px";
-                                initTranslateZ = Math.floor($(window).width()/2)+"px";
+                                initTranslateZ = Math.floor($(window).width()/2)+1+"px";
                             }
 
-                            // cubeElem.style[$.changeCss3PropToJsRef("transform")] = "rotateY(" + initRotateY + ") translateZ(" + initTranslateZ + ")";
+                            // cubeElem.style[$.changeCss3PropToJsRef("transform")] = "translateZ(5px)";
                             
-                            $frontPanel[0].style[$.changeCss3PropToJsRef("transform")] = "translateZ(" + Math.floor( -parseInt(initTranslateZ, 10)/4 )+"px" + ")";
-                            $frontPanel[0].style["width"] = frontPanelWidth;
-                            $frontPanel[0].style["height"] = frontPanelHeight;
-
+                            $frontPanel[0].style[$.changeCss3PropToJsRef("transform")] = "rotateY(180deg) translateZ(" + -parseInt(initTranslateZ, 10)+"px" + ")";
                             $backPanel[0].style[$.changeCss3PropToJsRef("transform")] = "rotateY(0deg) translateZ(" + -parseInt(initTranslateZ, 10)+"px" + ")";
 
                             $topPanel[0].style[$.changeCss3PropToJsRef("transform")] = "rotateX(-90deg) translateZ(" + -parseInt(initTranslateZ, 10)+"px" + ")";
@@ -1312,6 +1308,118 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
 
                             $leftPanel[0].style[$.changeCss3PropToJsRef("transform")] = "rotateY(90deg) translateZ(" + -parseInt(initTranslateZ, 10)+"px" + ")";
                             $rightPanel[0].style[$.changeCss3PropToJsRef("transform")] = "rotateY(-90deg) translateZ(" + -parseInt(initTranslateZ, 10)+"px" + ")";
+                        },
+
+                        control: function () {
+                            $toLeftButton.on($.clickEvt()+".createRoom", function () { handler("left") });
+                            $toRightButton.on($.clickEvt()+".createRoom", function () { handler("right") });
+
+                            (draggable) && canDraggable();
+
+                            var cubeElemCurrentProp = cubeElem.style[$.changeCss3PropToJsRef("transform")];
+                            var rotateValue = 90, rotateValueFlag = false;
+
+                            function handler(leftOrRight) {
+                                var transitionOptions = {
+                                    property:           $.vendorPrefix()+"transform",
+                                    complete:           function () {
+                                        // cubeElem.style[$.changeCss3PropToJsRef("transform")] = "translateZ("+Math.floor($(window).width()/2)+"px)";
+                                        // $(cubeElem).transition(transitionOptions);
+                                    }
+                                };
+
+                                (!rotateValueFlag)
+                                ? (leftOrRight==="left") ? (rotateValue = 90) : (rotateValue = -90)
+                                : (leftOrRight==="left") ? (rotateValue += 90) : (rotateValue -= 90);
+
+                                cubeElem.style[$.changeCss3PropToJsRef("transform")] = "rotateY("+rotateValue+"deg)";
+                                $(cubeElem).transition(transitionOptions);
+
+                                rotateValueFlag = true;
+                            }
+
+                            function canDraggable() {
+                                var
+                                    initRotateY = 0,
+                                    initRotateX = 0;
+
+                                var
+                                    dragging = false,
+                                    x, y,
+                                    dx, dy,
+                                    value_rotateX,
+                                    value_rotateY,
+                                    old_x = initRotateX,
+                                    old_y = initRotateY;
+                            
+                                //タッチ or マウスダウン
+                                $(document).on($.startEvt()+".createRoom", function (e) {
+                                    var e = e.originalEvent;
+
+                                    if ( $.hasTouch() ) {
+                                        x = e.touches[0].clientX - e.target.offsetLeft;
+                                        y = e.touches[0].clientY - e.target.offsetTop;
+                                    } else {
+                                        x = e.clientX - e.target.offsetLeft;
+                                        y = e.clientY - e.target.offsetTop;
+                                    }
+                                    
+                                    dragging = true;
+                                    
+                                    e.preventDefault();
+                                    
+                                    $(document).on($.moveEvt()+".createRoom_moveEvt", moveEvt);
+                                });
+                                
+                                //タッチエンド or ドラッグエンド
+                                $(document).on($.endEvt()+".createRoom", function (e) {
+                                    var e = e.originalEvent;
+
+                                    if ( dragging ) {
+                                        dragging = false;
+                                        
+                                        //以前の状態を保存
+                                        old_x = value_rotateX;
+                                        old_y = value_rotateY;
+                                        
+                                        $(document).off(".createRoom_moveEvt");
+                                    }
+                                });
+                                
+                                //タッチ中 or ドラッグ中
+                                function moveEvt(e) {
+                                    var e = e.originalEvent;
+
+                                    if ( dragging ) {
+                                        if ( $.hasTouch() ) {
+                                            dx = e.touches[0].clientX - x;
+                                            dy = e.touches[0].clientY - y;
+                                        } else {
+                                            dx = e.clientX - x;
+                                            dy = e.clientY - y;
+                                        }
+                                        
+                                        value_rotateX = (dy*100/360) + old_x;
+                                        value_rotateY = (dx*100/360) + old_y;
+                                        
+                                        $(cubeElem).transition({
+                                            property:           $.vendorPrefix()+"transform",
+                                            duration:           100,
+                                            "timing-function":  "linear",
+                                            delay:              0,
+                                            complete:           function () {}
+                                        });
+                                        
+                                        
+                                        cubeElem.style[$.changeCss3PropToJsRef("transform")]
+                                        =
+                                        "rotateX(" + value_rotateX + "deg) " +
+                                        "rotateY(" + value_rotateY + "deg) ";
+                                        
+                                        e.preventDefault();
+                                    }
+                                }
+                            }
                         }
                     };
 
@@ -1321,21 +1429,23 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                 function init() {
                     var _settings = $.extend({
                         initRotateY:        "0deg",
-                        initTranslateZ:     Math.floor($(window).width()/2)+"px",
+                        initTranslateZ:     Math.floor($(window).width()/2)+1+"px",
                         backPanel:          ".back-panel",
                         frontPanel:         ".front-panel",
                         bottomPanel:        ".bottom-panel",
                         topPanel:           ".top-panel",
                         leftPanel:          ".left-panel",
                         rightPanel:         ".right-panel",
-                        frontPanelWidth:    Math.floor($(window).width()/1)+"px",
-                        frontPanelHeight:   Math.floor($(window).height()/1)+"px",
-                        responsive:         true
+                        responsive:         true,
+                        draggable:          true,
+                        toLeftButton:       ".toLeftButton",
+                        toRightButton:      ".toRightButton"
                     }, options);
 
                     var that = fixPanels(_settings);
 
                     that.init();
+                    that.control();
 
                     (_settings.responsive)
                     &&

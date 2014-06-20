@@ -1162,6 +1162,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
      *     top:                "160px",
      *     backfaceVisibility: "visible",
      *     angleOfCube:        "rotateY(45deg)",
+     *     duration:            500,
      *     responsive:         false,
      *     callback:           function () {}
      * });
@@ -1188,9 +1189,14 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                 top:                "160px",
                 backfaceVisibility: "visible",
                 angleOfCube:        "rotateY(45deg)",
+                duration:           500,
+                delay:              0,
+                timingFunction:     "ease",
                 responsive:         false,
                 callback:           function () {}
             }, options);
+
+            this.hide();
 
             return this.each(function () {
                 _createCube(this);
@@ -1204,9 +1210,9 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
 
                 function setParams() {
                     if (_settings.responsive) {
-                        _settings.perspective = Math.floor( $(window).width()/2 )+"px";
-                        _settings.width = $(window).width()+"px";
-                        _settings.height = $(window).width()+"px";
+                        _settings.perspective = ( $(window).width() <= $(window).height() ) ? $(window).width()/2+"px" : $(window).height()/2+"px";
+                        _settings.width = ( $(window).width() <= $(window).height() ) ? $(window).width()+"px" : $(window).height()+"px";
+                        _settings.height = ( $(window).width() <= $(window).height() ) ? $(window).width()+"px" : $(window).height()+"px";
                     }
 
                     cubeWrapperElem.style["width"] = "100%";
@@ -1250,7 +1256,14 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                     &&
                     $(window).on($.resizeEvt()+".createCube", setParams);
 
+                    $(cubeElem).fadeIn();
                     cubeElem.style[$.changeCss3PropToJsRef("transform")] = _settings.angleOfCube;
+                    $(cubeElem).transition({
+                        property:           $.vendorPrefix() + "transform",
+                        duration:           _settings.duration,
+                        delay:              _settings.delay,
+                        "timing-function":  _settings.timingFunction
+                    });
 
                     _settings.callback.call(cubeElem);
                 }
@@ -1279,7 +1292,8 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
 
                 function fixPanels(params) {
                     var
-                        initRotateY = params.initRotateY,
+                        initRotateY_def = parseInt(params.initRotateY, 10),
+                        initRotateX_def = parseInt(params.initRotateX, 10),
                         initTranslateZ = params.initTranslateZ,
                         $backPanel = $(params.backPanel),
                         $frontPanel = $(params.frontPanel),
@@ -1295,7 +1309,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                     var that = {
                         init: function () {
                             if (responsive) {
-                                initTranslateZ = Math.floor($(window).width()/2)+1+"px";
+                                initTranslateZ = ( $(window).width() <= $(window).height() ) ? $(window).width()/2+1+"px" : $(window).height()/2+1+"px";
                             }
 
                             // cubeElem.style[$.changeCss3PropToJsRef("transform")] = "translateZ(5px)";
@@ -1311,10 +1325,10 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                         },
 
                         control: function () {
+                            (draggable) && canDraggable();
+
                             $toLeftButton.on($.clickEvt()+".createRoom", function () { handler("left") });
                             $toRightButton.on($.clickEvt()+".createRoom", function () { handler("right") });
-
-                            (draggable) && canDraggable();
 
                             var cubeElemCurrentProp = cubeElem.style[$.changeCss3PropToJsRef("transform")];
                             var rotateValue = 90, rotateValueFlag = false;
@@ -1323,6 +1337,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                                 var transitionOptions = {
                                     property:           $.vendorPrefix()+"transform",
                                     complete:           function () {
+                                        (draggable) && canDraggable();
                                         // cubeElem.style[$.changeCss3PropToJsRef("transform")] = "translateZ("+Math.floor($(window).width()/2)+"px)";
                                         // $(cubeElem).transition(transitionOptions);
                                     }
@@ -1340,8 +1355,8 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
 
                             function canDraggable() {
                                 var
-                                    initRotateY = 0,
-                                    initRotateX = 0;
+                                    initRotateY = initRotateY_def,
+                                    initRotateX = initRotateX_def;
 
                                 var
                                     dragging = false,
@@ -1404,7 +1419,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                                         
                                         $(cubeElem).transition({
                                             property:           $.vendorPrefix()+"transform",
-                                            duration:           100,
+                                            duration:           50,
                                             "timing-function":  "linear",
                                             delay:              0,
                                             complete:           function () {}
@@ -1429,6 +1444,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                 function init() {
                     var _settings = $.extend({
                         initRotateY:        "0deg",
+                        initRotateX:        "0deg",
                         initTranslateZ:     Math.floor($(window).width()/2)+1+"px",
                         backPanel:          ".back-panel",
                         frontPanel:         ".front-panel",

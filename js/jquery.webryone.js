@@ -1337,7 +1337,10 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                                 var transitionOptions = {
                                     property:           $.vendorPrefix()+"transform",
                                     complete:           function () {
-                                        (draggable) && canDraggable();
+                                        if (draggable) {
+                                            $(document).off(".createRoom_draggable");
+                                            canDraggable();
+                                        }
                                         // cubeElem.style[$.changeCss3PropToJsRef("transform")] = "translateZ("+Math.floor($(window).width()/2)+"px)";
                                         // $(cubeElem).transition(transitionOptions);
                                     }
@@ -1368,7 +1371,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                                     old_y = initRotateY;
                             
                                 //タッチ or マウスダウン
-                                $(document).on($.startEvt()+".createRoom", function (e) {
+                                $(document).on($.startEvt()+".createRoom_draggable", function (e) {
                                     var e = e.originalEvent;
 
                                     if ( $.hasTouch() ) {
@@ -1387,7 +1390,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                                 });
                                 
                                 //タッチエンド or ドラッグエンド
-                                $(document).on($.endEvt()+".createRoom", function (e) {
+                                $(document).on($.endEvt()+".createRoom_draggable", function (e) {
                                     var e = e.originalEvent;
 
                                     if ( dragging ) {

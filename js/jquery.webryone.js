@@ -1304,15 +1304,14 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                         $toLeftButton = $(params.toLeftButton),
                         $toRightButton = $(params.toRightButton),
                         responsive = params.responsive;
-                        draggable = params.draggable;
+                        draggable = params.draggable,
+                        selectedPanelPosition = params.selectedPanelPosition;
 
                     var that = {
                         init: function () {
                             if (responsive) {
                                 initTranslateZ = ( $(window).width() <= $(window).height() ) ? $(window).width()/2+1+"px" : $(window).height()/2+1+"px";
                             }
-
-                            // cubeElem.style[$.changeCss3PropToJsRef("transform")] = "translateZ(5px)";
                             
                             $frontPanel[0].style[$.changeCss3PropToJsRef("transform")] = "rotateY(180deg) translateZ(" + -parseInt(initTranslateZ, 10)+"px" + ")";
                             $backPanel[0].style[$.changeCss3PropToJsRef("transform")] = "rotateY(0deg) translateZ(" + -parseInt(initTranslateZ, 10)+"px" + ")";
@@ -1327,13 +1326,82 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                         control: function () {
                             (draggable) && canDraggable();
 
-                            $toLeftButton.on($.clickEvt()+".createRoom", function () { handler("left") });
-                            $toRightButton.on($.clickEvt()+".createRoom", function () { handler("right") });
+                            $toLeftButton.on($.clickEvt()+".createRoom", function () { rotateYroom("left") });
+                            $toRightButton.on($.clickEvt()+".createRoom", function () { rotateYroom("right") });
 
-                            var cubeElemCurrentProp = cubeElem.style[$.changeCss3PropToJsRef("transform")];
+                            function doubleTapAndClickEvt(evt, elem, func) {
+                                console.log(elem);
+                                elem.data("dblTap", false).on(evt+".viewPanel", function () {
+                                    if ( $(this).data("dblTap") ) {
+                                        //ダブルタップ時
+                                        func();
+                                        $(this).data("dblTap", false);
+                                    } else {
+                                        $(this).data("dblTap", true);
+                                    }
+                                    setTimeout(function () {
+                                        elem.data("dblTap", false);
+                                    }, 400);
+                                });
+                            }
+
+                            var viewPanelEventType = ($.hasTouch()) ? "touchend" : "click";
+
+                            doubleTapAndClickEvt(viewPanelEventType, $frontPanel, function () { viewPanel( $frontPanel[0], [$leftPanel, $rightPanel, $backPanel, $topPanel, $bottomPanel] ) });
+                            doubleTapAndClickEvt(viewPanelEventType, $backPanel, function () { viewPanel( $backPanel[0], [$leftPanel, $rightPanel, $frontPanel, $topPanel, $bottomPanel] ) });
+                            doubleTapAndClickEvt(viewPanelEventType, $leftPanel, function () { viewPanel( $leftPanel[0], [$rightPanel, $frontPanel, $backPanel, $topPanel, $bottomPanel] ) });
+                            doubleTapAndClickEvt(viewPanelEventType, $rightPanel, function () { viewPanel( $rightPanel[0], [$leftPanel, $frontPanel, $backPanel, $topPanel, $bottomPanel] ) });
+                            doubleTapAndClickEvt(viewPanelEventType, $topPanel, function () { viewPanel( $topPanel[0], [$leftPanel, $rightPanel, $frontPanel, $backPanel, $bottomPanel] ) });
+                            doubleTapAndClickEvt(viewPanelEventType, $bottomPanel, function () { viewPanel( $bottomPanel[0], [$leftPanel, $rightPanel, $frontPanel, $backPanel, $topPanel] ) });
+
+                            // $frontPanel.on(viewPanelEventType+".viewPanel", function () { viewPanel( this, [$leftPanel, $rightPanel, $backPanel, $topPanel, $bottomPanel] ) });
+                            // $backPanel.on(viewPanelEventType+".viewPanel", function () { viewPanel( this, [$leftPanel, $rightPanel, $frontPanel, $topPanel, $bottomPanel] ) });
+                            // $leftPanel.on(viewPanelEventType+".viewPanel", function () { viewPanel( this, [$rightPanel, $frontPanel, $backPanel, $topPanel, $bottomPanel] ) });
+                            // $rightPanel.on(viewPanelEventType+".viewPanel", function () { viewPanel( this, [$leftPanel, $frontPanel, $backPanel, $topPanel, $bottomPanel] ) });
+                            // $topPanel.on(viewPanelEventType+".viewPanel", function () { viewPanel( this, [$leftPanel, $rightPanel, $frontPanel, $backPanel, $bottomPanel] ) });
+                            // $bottomPanel.on(viewPanelEventType+".viewPanel", function () { viewPanel( this, [$leftPanel, $rightPanel, $frontPanel, $backPanel, $topPanel] ) });
+
+                            function viewPanel(self, $otherPanelsArr) {
+                                var transitionOptions = {
+                                    property:           $.vendorPrefix()+"transform",
+                                    duration:          500
+                                };
+
+                                function leavePanels() {
+                                    $.each($otherPanelsArr, function (idx) {
+                                        var transformVal = $otherPanelsArr[idx][0].style[$.changeCss3PropToJsRef("transform")].replace(/\stranslateZ.*/g, "");
+                                        $otherPanelsArr[idx][0].style[$.changeCss3PropToJsRef("transform")] = transformVal + "translateZ("+-$(this).width()*2+"px)";
+                                        $otherPanelsArr[idx].transition(transitionOptions);
+                                        $otherPanelsArr[idx].fadeOut();
+                                    });
+
+                                    var transformVal = self.style[$.changeCss3PropToJsRef("transform")];
+                                    self.style[$.changeCss3PropToJsRef("transform")] = transformVal + " scale3d(5, 5, 5)";
+                                    $(self).transition(transitionOptions);
+                                    $(self).fadeOut(showContents);
+                                }
+
+                                function showContents() {
+                                    var cloneElem = $(self).clone();
+
+                                    cloneElem[0].style.cssText = "";
+                                    cloneElem.addClass("jqueryWebryOneJsRoomClone");
+                                    cloneElem.css(selectedPanelPosition).hide();
+
+                                    $("body").append(cloneElem);
+                                    $(".jqueryWebryOneJsRoomClone").fadeIn();
+
+                                    if (draggable) {
+                                        $(document).off(".createRoom_draggable");
+                                    }
+                                }
+
+                                leavePanels();
+                            }
+
                             var rotateValue = 90, rotateValueFlag = false;
 
-                            function handler(leftOrRight) {
+                            function rotateYroom(leftOrRight) {
                                 var transitionOptions = {
                                     property:           $.vendorPrefix()+"transform",
                                     complete:           function () {
@@ -1341,8 +1409,6 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                                             $(document).off(".createRoom_draggable");
                                             canDraggable();
                                         }
-                                        // cubeElem.style[$.changeCss3PropToJsRef("transform")] = "translateZ("+Math.floor($(window).width()/2)+"px)";
-                                        // $(cubeElem).transition(transitionOptions);
                                     }
                                 };
 
@@ -1352,6 +1418,12 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
 
                                 cubeElem.style[$.changeCss3PropToJsRef("transform")] = "rotateY("+rotateValue+"deg)";
                                 $(cubeElem).transition(transitionOptions);
+
+                                ($(".jqueryWebryOneJsRoomClone")[0])
+                                &&
+                                $(".jqueryWebryOneJsRoomClone").remove();
+                                that.init();
+                                $(cubeElem).children().fadeIn();
 
                                 rotateValueFlag = true;
                             }
@@ -1417,8 +1489,8 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                                             dy = e.clientY - y;
                                         }
                                         
-                                        value_rotateX = (dy*100/360) + old_x;
-                                        value_rotateY = (dx*100/360) + old_y;
+                                        value_rotateX = (dy*150/360) + old_x;
+                                        value_rotateY = (dx*150/360) + old_y;
                                         
                                         $(cubeElem).transition({
                                             property:           $.vendorPrefix()+"transform",
@@ -1434,7 +1506,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                                         "rotateX(" + value_rotateX + "deg) " +
                                         "rotateY(" + value_rotateY + "deg) ";
                                         
-                                        e.preventDefault();
+                                        // e.preventDefault();
                                     }
                                 }
                             }
@@ -1446,19 +1518,20 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
 
                 function init() {
                     var _settings = $.extend({
-                        initRotateY:        "0deg",
-                        initRotateX:        "0deg",
-                        initTranslateZ:     Math.floor($(window).width()/2)+1+"px",
-                        backPanel:          ".back-panel",
-                        frontPanel:         ".front-panel",
-                        bottomPanel:        ".bottom-panel",
-                        topPanel:           ".top-panel",
-                        leftPanel:          ".left-panel",
-                        rightPanel:         ".right-panel",
-                        responsive:         true,
-                        draggable:          true,
-                        toLeftButton:       ".toLeftButton",
-                        toRightButton:      ".toRightButton"
+                        initRotateY:            "0deg",
+                        initRotateX:            "0deg",
+                        initTranslateZ:         Math.floor($(window).width()/2)+1+"px",
+                        backPanel:              ".back-panel",
+                        frontPanel:             ".front-panel",
+                        bottomPanel:            ".bottom-panel",
+                        topPanel:               ".top-panel",
+                        leftPanel:              ".left-panel",
+                        rightPanel:             ".right-panel",
+                        responsive:             true,
+                        draggable:              true,
+                        toLeftButton:           ".toLeftButton",
+                        toRightButton:          ".toRightButton",
+                        selectedPanelPosition:  { position: "absolute", top: 0, left: 0 }
                     }, options);
 
                     var that = fixPanels(_settings);

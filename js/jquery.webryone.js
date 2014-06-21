@@ -1400,7 +1400,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                                 leavePanels();
                             }
 
-                            var rotateValue = 90, rotateValueFlag = false;
+                            var rotateValue = 45, rotateValueFlag = false;
 
                             function rotateYroom(leftOrRight) {
                                 var transitionOptions = {
@@ -1414,8 +1414,8 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                                 };
 
                                 (!rotateValueFlag)
-                                ? (leftOrRight==="left") ? (rotateValue = 90) : (rotateValue = -90)
-                                : (leftOrRight==="left") ? (rotateValue += 90) : (rotateValue -= 90);
+                                ? (leftOrRight==="left") ? (rotateValue = 45) : (rotateValue = -45)
+                                : (leftOrRight==="left") ? (rotateValue += 45) : (rotateValue -= 45);
 
                                 cubeElem.style["display"] = "";
 

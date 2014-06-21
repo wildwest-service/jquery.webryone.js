@@ -1305,7 +1305,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                         $toRightButton = $(params.toRightButton),
                         responsive = params.responsive;
                         draggable = params.draggable,
-                        selectedPanelPosition = params.selectedPanelPosition;
+                        selectedPanelStyle = params.selectedPanelStyle;
 
                     var that = {
                         init: function () {
@@ -1330,7 +1330,6 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                             $toRightButton.on($.clickEvt()+".createRoom", function () { rotateYroom("right") });
 
                             function doubleTapAndClickEvt(evt, elem, func) {
-                                console.log(elem);
                                 elem.data("dblTap", false).on(evt+".viewPanel", function () {
                                     if ( $(this).data("dblTap") ) {
                                         //ダブルタップ時
@@ -1386,10 +1385,12 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
 
                                     cloneElem[0].style.cssText = "";
                                     cloneElem.addClass("jqueryWebryOneJsRoomClone");
-                                    cloneElem.css(selectedPanelPosition).hide();
+                                    cloneElem.css(selectedPanelStyle).hide();
 
                                     $("body").append(cloneElem);
                                     $(".jqueryWebryOneJsRoomClone").fadeIn();
+
+                                    cubeElem.style["display"] = "none";
 
                                     if (draggable) {
                                         $(document).off(".createRoom_draggable");
@@ -1415,6 +1416,8 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                                 (!rotateValueFlag)
                                 ? (leftOrRight==="left") ? (rotateValue = 90) : (rotateValue = -90)
                                 : (leftOrRight==="left") ? (rotateValue += 90) : (rotateValue -= 90);
+
+                                cubeElem.style["display"] = "";
 
                                 cubeElem.style[$.changeCss3PropToJsRef("transform")] = "rotateY("+rotateValue+"deg)";
                                 $(cubeElem).transition(transitionOptions);
@@ -1517,7 +1520,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                 }
 
                 function init() {
-                    var _settings = $.extend({
+                    var _settings = $.extend(true, {
                         initRotateY:            "0deg",
                         initRotateX:            "0deg",
                         initTranslateZ:         Math.floor($(window).width()/2)+1+"px",
@@ -1531,7 +1534,12 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                         draggable:              true,
                         toLeftButton:           ".toLeftButton",
                         toRightButton:          ".toRightButton",
-                        selectedPanelPosition:  { position: "absolute", top: 0, left: 0 }
+                        selectedPanelStyle:     {
+                                                    position: "absolute",
+                                                    top: 0,
+                                                    left: 0,
+                                                    width: "100%"
+                                                }
                     }, options);
 
                     var that = fixPanels(_settings);

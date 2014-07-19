@@ -1,5 +1,5 @@
 /*
- * jquery.webryone.js v1.0.0
+ * jquery.webryone.js v1.0.1
  * https://github.com/webryone/jquery.webryone.js/
  * 
  * MIT licensed
@@ -1277,6 +1277,10 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
         return $._callMethods( createCube, options, this );
     };
 
+    /**
+     * #ルーム生成
+     * @type {Object}
+     */
     var createRoom = {};
 
     createRoom.methods = {
@@ -1559,6 +1563,337 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
 
     $.fn.createRoom = function (options) {
         return $._callMethods( createRoom, options, this );
+    };
+
+    /**
+     * #カルーセル
+     * @type {Object}
+     */
+    var carousel = {};
+
+    carousel.methods = {
+
+        init: function (options) {
+
+            return this.each(function () {
+                _init(this);
+            });
+
+            function Carousel(self, options) {
+                var
+                    width = ( $(self).parent().width() >= parseInt(options.width, 10) ) ? options.width : $(self).parent().width()+"px",
+                    height = options.height,
+                    slideDelay = options.slideDelay,
+                    slideDuration = options.slideDuration,
+                    slideEasing = options.slideEasing,
+                    autoHeight = options.autoHeight,
+                    canSwipe = options.canSwipe,
+                    showControl = options.showControl,
+                    $controlPanel = $(options.controlPanel),
+                    $controlNext = $(options.controlNext),
+                    $controlPrev = $(options.controlPrev),
+                    showCurrent = options.showCurrent,
+                    fadeIn = options.fadeIn,
+                    fadeDuration = options.fadeDuration,
+                    $wrapperElem = $(self),
+                    $ulElem = $wrapperElem.children(options.carouselContents),
+                    $liElems = $ulElem.children(),
+                    $imgElems = $liElems.children(),
+                    comebackDelay = options.comebackDelay,
+                    responsive = options.responsive,
+                    showDescription = options.showDescription,
+                    $description = $(options.description);
+                if ( showDescription ) {
+                    var
+                        $descriptionUl = $description.children("ul"),
+                        $descriptionLists = $descriptionUl.children();
+                }
+
+                var
+                    WIDTH = parseInt(width, 10),
+                    slideWidth,
+                    slideCounter = 0,
+                    timerId_loop = null,
+                    timerId_comeback = null;
+
+                var that = {
+                    setStyle: function () {
+                        var dfd = $.Deferred();
+
+                        $wrapperElem.css({
+                            position:   "relative",
+                            overflow:   "hidden",
+                            padding:    "0",
+                            width:      width
+                        });
+
+                        $ulElem.css({
+                            position:   "relative",
+                            listStyle:  "none",
+                            width:      parseInt(width, 10)*$liElems.length+"px",
+                            margin:     "0",
+                            padding:    "0",
+                            left:       "0"
+                        });
+
+                        $liElems.css({
+                            position:   "relative",
+                            float:      "left",
+                            margin:     "0",
+                            padding:    "0"
+                        }).each(function () {
+                            this.style[$.changeCss3PropToJsRef("box-sizing")] = "border-box";
+                        });
+
+                        $imgElems.css({
+                            width:  width,
+                            height: height
+                        });
+
+                        $controlPanel.css({
+                            position: "absolute",
+                            top: 0,
+                            left: 0
+                        });
+
+                        if ( showDescription ) {
+                            $descriptionUl.css({
+                                position: "relative",
+                                margin: "0",
+                                padding: "0",
+                                listStyle: "none"
+                            });
+
+                            $descriptionLists.not(":first").hide()
+                            .css({
+                                position: "absolute",
+                                top: 0,
+                                left: 0
+                            });
+                        }
+
+                        dfd.resolve();
+
+                        return dfd.promise();
+                    },
+
+                    slide: function (action) {
+
+                        var ulElemLeftPosition = parseInt($ulElem.css("left"), 10);
+
+                        switch ( action ) {
+                            case "loop": (function () {
+                                timerId_loop = setTimeout(function () { 
+                                    slideCounter++;
+                                    if ( slideCounter >= $liElems.length ) {
+                                        slideCounter = 0;
+                                    }
+                                    if ( ulElemLeftPosition <= -WIDTH*($liElems.length-1) ) {
+                                        slideWidth = "0px";
+                                    } else {
+                                        slideWidth = "-="+WIDTH;
+                                    }
+                                    $ulElem.stop(true, true);
+                                    $wrapperElem.stop(true, true);
+                                    that.move(slideDelay);
+                                }, slideDelay);
+                            })();
+                            break;
+
+                            case "next": (function () {
+                                clearTimeout(timerId_loop);
+                                clearTimeout(timerId_comeback);
+                                slideCounter++;
+                                if ( slideCounter >= $liElems.length ) {
+                                    slideCounter = 0;
+                                }
+                                if ( ulElemLeftPosition <= -WIDTH*($liElems.length-1) ) {
+                                    slideWidth = "0px";
+                                } else {
+                                    slideWidth = "-="+WIDTH;
+                                }
+                                $ulElem.stop(true, true);
+                                $wrapperElem.stop(true, true);
+                                that.move(0);
+                            })();
+                            break;
+
+                            case "prev": (function () {
+                                clearTimeout(timerId_loop);
+                                clearTimeout(timerId_comeback);
+                                slideCounter--;
+                                if ( slideCounter <= 0 ) {
+                                    slideCounter = 0;
+                                }
+                                if ( ulElemLeftPosition >= 0 || isNaN(ulElemLeftPosition) ) {
+                                    slideWidth = -WIDTH*($liElems.length-1)+"px";
+                                    slideCounter = $liElems.length-1;
+                                } else {
+                                    slideWidth = "+="+WIDTH;
+                                }
+                                $ulElem.stop(true, true);
+                                $wrapperElem.stop(true, true);
+                                that.move(0);
+                            })();
+                            break;
+
+                            case "stop": (function () {
+                                clearTimeout(timerId_loop);
+                                clearTimeout(timerId_comeback);
+                            })();
+                            break;
+
+                            case "start": (function () {
+                                that.slide("loop");
+                            })();
+                            break;
+                        }
+                    },
+
+                    move: function (delay) {
+                        if ( !delay ) {
+                            $controlNext.data("carousel-loop", false);
+                            animation();
+                        } else {
+                            $controlNext.data("carousel-loop", true);
+                            animation();
+                        }
+
+                        function animation () {
+                            $ulElem.animate({
+                                left: slideWidth,
+                            },
+                            {
+                                duration: slideDuration,
+                                easing: slideEasing,
+                                queue: true,
+                                complete: function () {
+                                    if ( !autoHeight ) {
+                                        if ( !delay ) {
+                                            timerId_comeback = setTimeout(function () { that.slide("loop"); }, comebackDelay);
+                                        }
+                                        ( $controlNext.data("carousel-loop") ) && that.slide("loop");
+                                    }
+                                }
+                            });
+
+                            if ( autoHeight ) {
+                                $wrapperElem.animate({
+                                    height: $($imgElems[slideCounter]).height()+"px"
+                                },
+                                {
+                                    duration: slideDuration,
+                                    easing: slideEasing,
+                                    queue: true,
+                                    complete: function () {
+                                        if ( !delay ) {
+                                            timerId_comeback = setTimeout(function () { that.slide("loop"); }, comebackDelay);
+                                        }
+                                        ( $controlNext.data("carousel-loop") ) && that.slide("loop");
+                                    }
+                                });
+                            }
+
+                            if ( showDescription ) {
+                                $descriptionLists.not($($descriptionLists[slideCounter])).fadeOut(slideDuration, function () {
+                                    $($descriptionLists[slideCounter]).fadeIn(slideDuration);
+                                });
+                            }
+                        }
+                    },
+
+                    control: function () {
+                        var dfd = $.Deferred();
+
+                        var canClickFlag = true;
+
+                        $controlNext.on("click.carouselNext", function () {
+                            if( !$ulElem.is(":animated") ) {
+                                that.slide("next");
+                            }
+                            return false;
+                        });
+
+                        $controlPrev.on("click.carouselPrev", function () {
+                            if( !$ulElem.is(":animated") ) {
+                                that.slide("prev");
+                            }
+                            return false;
+                        });
+
+                        $imgElems.on($.overEvt()+".carouselStop", function () {
+                            that.slide("stop");
+                        });
+
+                        $imgElems.on($.outEvt()+".carouselStart", function () {
+                            that.slide("start");
+                        });
+
+                        if (responsive) {
+                            $(window).on($.resizeEvt()+".carouselResponsive", function () {
+                                if( !$ulElem.is(":animated") ) {
+                                    width = $wrapperElem.parent().width()+"px";
+                                    WIDTH = $wrapperElem.parent().width();
+                                    slideCounter = 0;
+                                    that.setStyle().done(function () {
+                                        that.slide("stop");
+                                        that.slide("loop");
+                                    });
+                                }
+                            });
+                        }
+
+                        dfd.resolve();
+
+                        return dfd.promise();
+                    },
+
+                    init: function () {
+                        that.setStyle().done(that.control).done(function () {
+                            that.slide("loop");
+                            (!showControl) && $controlPanel.hide();
+                            (fadeIn) && $wrapperElem.fadeIn(fadeDuration);
+                        });
+                    }
+                };
+
+                return that;
+            }
+
+            function _init(self) {
+                var _settings = $.extend({
+                    carouselContents:   ".carousel-contents",
+                    width:              "200px",
+                    height:             "auto",
+                    slideDelay:         3000,
+                    slideDuration:      500,
+                    slideEasing:        "swing",
+                    autoHeight:         true,
+                    canSwipe:           true,
+                    showControl:        true,
+                    controlPanel:       ".carousel-control",
+                    controlNext:        ".carousel-control-next",
+                    controlPrev:        ".carousel-control-prev",
+                    showCurrent:        true,
+                    fadeIn:             true,
+                    fadeDuration:       500,
+                    comebackDelay:      3000,
+                    responsive:         true,
+                    showDescription:    false,
+                    description:        ".carousel-current-description"
+                }, options);
+
+                (_settings.fadeIn) && $(self).hide();
+
+                var that = Carousel(self, _settings);
+
+                that.init();
+            }
+        }
+    };
+
+    $.fn.carousel = function (options) {
+        return $._callMethods( carousel, options, this );
     };
 
 })(jQuery);

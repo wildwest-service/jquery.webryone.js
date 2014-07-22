@@ -1,5 +1,5 @@
 /*
- * jquery.webryone.js v1.0.1
+ * jquery.webryone.js v1.0.2
  * https://github.com/webryone/jquery.webryone.js/
  * 
  * MIT licensed
@@ -1598,7 +1598,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                     $wrapperElem = $(self),
                     $ulElem = $wrapperElem.children(options.carouselContents),
                     $liElems = $ulElem.children(),
-                    $imgElems = $liElems.children(),
+                    $imgElems = $liElems.find("img"),
                     comebackDelay = options.comebackDelay,
                     responsive = options.responsive,
                     showDescription = options.showDescription,

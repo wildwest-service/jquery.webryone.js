@@ -17,35 +17,60 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
     // jQueryメソッドを拡張
 
     /**
-     * #CSS3 transition
+     * #carousel
      *
-     * $("div").css({
-     *     "background-color":   "red",
-     *     width:                "800px",
-     *     height:               "600px"
-     * })
-     * .transition({
-     *     property:           "width, height",
-     *     duration:           5000,
-     *     "timing-function":  "ease",
-     *     delay:              1000,
-     *     complete:           function () {}
+     * $(".carousel-wrapper").carousel({
+     *     carouselContents: ".carousel-contents",
+     *     width:            "500px",
+     *     height:           "auto",
+     *     slideDelay:       3000,
+     *     slideDuration:    500,
+     *     slideEasing:      "swing",
+     *     autoHeight:       false,
+     *     canSwipe:         true,
+     *     showControl:      true,
+     *     controlPanel:     ".carousel-control",
+     *     controlNext:      ".carousel-control-next",
+     *     controlPrev:      ".carousel-control-prev",
+     *     showCurrent:      true,
+     *     fadeIn:           true,
+     *     fadeDuration:     500,
+     *     comebackDelay:    3000,
+     *     responsive:       true,
+     *     windowBreakPoint: 991,
+     *     showDescription:  true,
+     *     description:      ".carousel-description"
      * });
      * 
-     * @param  {Object} option 上記transitionオプションオブジェクト
+     * @param  {Object} option 上記carouselオプションオブジェクト
      * @return {Object}        jQueryObject
      */
-    var Transition = function () {};
+    var Carousel = function () {};
 
-    Transition.prototype = {
-        constructor: Transition,
+    Carousel.prototype = {
+        constructor: Carousel,
 
         defaults: {
-            property:           "",
-            duration:           500,
-            "timing-function":  "ease",
-            delay:              0,
-            complete:           function () {}
+            carouselContents:   ".carousel-contents",
+            width:              "200px",
+            height:             "auto",
+            slideDelay:         3000,
+            slideDuration:      500,
+            slideEasing:        "swing",
+            autoHeight:         true,
+            canSwipe:           true,
+            showControl:        true,
+            controlPanel:       ".carousel-control",
+            controlNext:        ".carousel-control-next",
+            controlPrev:        ".carousel-control-prev",
+            showCurrent:        true,
+            fadeIn:             true,
+            fadeDuration:       500,
+            comebackDelay:      3000,
+            responsive:         true,
+            windowBreakPoint:   991,
+            showDescription:    false,
+            description:        ".carousel-current-description"
         },
 
         setOptions: function (options) {
@@ -54,51 +79,22 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
 
         methods: {
             init: function (options) {
-                if ( !$.hasTransition() ) {
-                    $.error("transitionプロパティが未対応です");
-                    return this;
-                }
-
-                Transition.prototype.setOptions(options);
+                
+                Carousel.prototype.setOptions(options);
 
                 return this.each(function () {
-                    Transition.prototype.mainProcessing(this);
+                    Carousel.prototype.mainProcessing(this);
                 });
             }
         },
 
         mainProcessing: function(that) {
-            that.style[$.changeCss3PropToJsRef("transition")] = "";
-
-            that.style[$.changeCss3PropToJsRef("transition-property")]          = this.options.property;
-            that.style[$.changeCss3PropToJsRef("transition-duration")]          = this.options.duration+"ms";
-            that.style[$.changeCss3PropToJsRef("transition-timing-function")]   = this.options["timing-function"];
-            that.style[$.changeCss3PropToJsRef("transition-delay")]             = this.options.delay+"ms";
             
-            var me = this;
-            // completeリスナー削除 & 実行
-            var _handle = function () {
-                //削除
-                $(that).off(".transitionEnd");
-                
-                //実行
-                that.style[$.changeCss3PropToJsRef("transition")] = "";
-                me.options.complete.apply(that);
-            };
-            
-            //リスナー登録
-            $(that).on("webkitTransitionEnd.transitionEnd", _handle);
-            $(that).on("MozTransitionEnd.transitionEnd", _handle);
-            $(that).on("mozTransitionEnd.transitionEnd", _handle);
-            $(that).on("msTransitionEnd.transitionEnd", _handle);
-            $(that).on("oTransitionEnd.transitionEnd", _handle);
-            $(that).on("transitionEnd.transitionEnd", _handle);
-            $(that).on("transitionend.transitionEnd", _handle);
         }
     };
 
-    $.fn.transition = function (options) {
-        return $._callMethods( new Transition, options, this );
+    $.fn.carousel = function (options) {
+        return $._callMethods( new Carousel, options, this );
     };
 
 })(jQuery);

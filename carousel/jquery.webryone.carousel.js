@@ -87,16 +87,17 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                     $img = $li.find("img");
 
                 // styleの初期値設定
-                that.css({
-                    overflow: "hidden",
+                $img.css({
                     width: options.width,
+                    height: options.height,
                     margin: "0",
                     padding: "0"
                 });
 
-                $img.css({
+                that.css({
+                    overflow: "hidden",
                     width: options.width,
-                    height: options.height,
+                    height: $img.height()+"px",
                     margin: "0",
                     padding: "0"
                 });
@@ -118,6 +119,10 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                     padding: "0"
                 });
 
+                $(options.controlPanel).css({
+
+                });
+
                 return that.each(function () {
                     // 初期化
                     carousel = mainProcessing($ul, $li.length, options);
@@ -134,6 +139,28 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                     that.on($.outEvt()+".startCarousel", function () {
                         setTimeout( carousel.loop, options.comebackDelay );
                     });
+
+                    // nextボタン押下時のイベントをバインド
+                    $(options.controlNext).on("click.nextClickCarousel", function () {
+                        ( !$ul.is(":animated") ) && carousel.move("0");
+                    })
+                    .on($.overEvt()+".stopCarousel", function () {  // nextボタンにホバー時にカルーセルをストップ
+                        carousel.stop();
+                    })
+                    .on($.outEvt()+".startCarousel", function () {  // nextボタンからアウト時にカルーセルを再開
+                        setTimeout( carousel.loop, options.comebackDelay );
+                    });
+
+                    // prevボタン押下時のイベントをバインド
+                    $(options.controlPrev).on("click.prevClickCarousel", function () {
+                        ( !$ul.is(":animated") ) && carousel.move("0", "prev");
+                    })
+                    .on($.overEvt()+".stopCarousel", function () {  // prevボタンにホバー時にカルーセルをストップ
+                        carousel.stop();
+                    })
+                    .on($.outEvt()+".startCarousel", function () {  // prevボタンからアウト時にカルーセルを再開
+                        setTimeout( carousel.loop, options.comebackDelay );
+                    });
                 });
             }
         };
@@ -146,15 +173,22 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
         var mainProcessing = function ($moveElem, $li_length, options) {
             // カルーセルの状態を管理するためのオブジェクト (クロージャ)
             var state = {
-                counter: 0
+                counter: 0,
+                loopFlag: false
             };
 
             // mainProcessingのメソッドを定義
             return {
                 // スライドアニメーションメソッド
-                move: function (delay) {
+                move: function (delay, prev) {
+                    if (!prev) {
+                        var leftPosition = ( state.counter >= $li_length-1 ) ? "0px" : "-=" + options.width;
+                    } else {
+                        var leftPosition = ( state.counter <= 0 ) ? -parseInt(options.width, 10)*($li_length-1)+"px" : "+=" + options.width;
+                    }
+
                     $moveElem.delay( (!delay) ? 0 : +delay ).animate({
-                        left: ( state.counter >= $li_length-1 ) ? "0px" : "-=" + parseInt(options.width, 10)+"px"
+                        left: leftPosition
                     },
                     {
                         duration: options.slideDuration,
@@ -163,8 +197,11 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                         complete: function () {}
                     });
 
-                    state.counter++;
+                    (!prev) ? state.counter++ : state.counter--;
 
+                    if (state.counter === -1 ) {
+                        state.counter = $li_length-1;
+                    }
                     if ( state.counter > $li_length-1 ) {
                         state.counter = 0;
                     }
@@ -172,12 +209,20 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
 
                 // ループメソッド
                 loop: function () {
-                    timerId = setInterval( function () { carousel.move(); }, options.slideDelay );
+                    if (!state.loopFlag) {
+                        timerId = setInterval( function () { carousel.move(); }, options.slideDelay );
+                    }
+
+                    state.loopFlag = true;
                 },
 
                 // ストップメソッド
                 stop: function () {
-                    clearInterval(timerId);
+                    if (state.loopFlag) {
+                        clearInterval(timerId);
+                    }
+
+                    state.loopFlag = false;
                 }
             };
         };

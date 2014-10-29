@@ -45,12 +45,9 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
      * @param  {Object} option 上記carouselオプションオブジェクト
      * @return {Object}        jQueryObject
      */
-    var Carousel = function () {};
+    $.fn.carousel = function (op) {
 
-    Carousel.prototype = {
-        constructor: Carousel,
-
-        defaults: {
+        $.fn.carousel.defaults = {
             carouselContents:   ".carousel-contents",
             width:              "200px",
             height:             "auto",
@@ -71,30 +68,41 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
             windowBreakPoint:   991,
             showDescription:    false,
             description:        ".carousel-current-description"
-        },
+        };
 
-        setOptions: function (options) {
-            this.options = $.extend(true, {}, this.defaults, options);
-        },
+        var options = $.extend(true, {}, $.fn.carousel.defaults, op);
 
-        methods: {
-            init: function (options) {
-                
-                Carousel.prototype.setOptions(options);
+        var that = this;
 
-                return this.each(function () {
-                    Carousel.prototype.mainProcessing(this);
+        var methods = {
+            init: function () {
+                return that.each(function () {
+                    var height = $(this).height();
+                    var width = $(this).width();
+
+                    var carousel = new Carousel(width, height);
+
+                    carousel.mainProcessing();
                 });
             }
-        },
+        };
 
-        mainProcessing: function(that) {
-            
-        }
-    };
+        // コンストラクタ
+        var Carousel = function (w, h) {
+            this.with = w;
+            this.height = h;
+        };
 
-    $.fn.carousel = function (options) {
-        return $._callMethods( new Carousel, options, this );
+        Carousel.prototype = {
+
+            constructor: Carousel,
+
+            mainProcessing: function () {
+                this.width;
+            }
+        };
+
+        return $._fnCallMethods(methods, op);
     };
 
 })(jQuery);

@@ -47,6 +47,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
      */
     $.fn.carousel = function (op) {
 
+        // オプションのデフォルト値
         $.fn.carousel.defaults = {
             carouselContents:   ".carousel-contents",
             width:              "200px",
@@ -67,39 +68,118 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
             responsive:         true,
             windowBreakPoint:   991,
             showDescription:    false,
-            description:        ".carousel-current-description"
+            description:        ".carousel-description"
         };
 
+        // オプションをマージして保存する
         var options = $.extend(true, {}, $.fn.carousel.defaults, op);
 
+        // jQueryオブジェクトの参照
         var that = this;
 
+        // オプションに応じて実行するメソッドを定義
         var methods = {
             init: function () {
+                // カルーセルに必要な変数を定義
+                var
+                    $ul = that.children(options.carouselContents),
+                    $li = $ul.children(),
+                    $img = $li.find("img");
+
+                // styleの初期値設定
+                that.css({
+                    overflow: "hidden",
+                    width: options.width,
+                    margin: "0",
+                    padding: "0"
+                });
+
+                $img.css({
+                    width: options.width,
+                    height: options.height,
+                    margin: "0",
+                    padding: "0"
+                });
+
+                $ul.css({
+                    position: "relative",
+                    listStyle: "none",
+                    margin: "0",
+                    padding: "0",
+                    width: parseInt(options.width, 10) * $li.length + "px",
+                    height: $img.height()+"px"
+                });
+
+                $li.css({
+                    float: "left",
+                    width: options.width,
+                    height: $img.height()+"px",
+                    margin: "0",
+                    padding: "0"
+                });
+
                 return that.each(function () {
-                    var height = $(this).height();
-                    var width = $(this).width();
+                    // 初期化
+                    carousel = mainProcessing($ul, $li.length, options);
 
-                    var carousel = new Carousel(width, height);
+                    // カルーセルをループ
+                    carousel.loop();
+                    
+                    // カルーセルのストップイベントをバインド
+                    that.on($.overEvt()+".stopCarousel", function () {
+                        carousel.stop();
+                    });
 
-                    carousel.mainProcessing();
+                    // カルーセルの再開イベントをバインド
+                    that.on($.outEvt()+".startCarousel", function () {
+                        setTimeout( carousel.loop, options.comebackDelay );
+                    });
                 });
             }
         };
 
-        // コンストラクタ
-        var Carousel = function (w, h) {
-            this.with = w;
-            this.height = h;
-        };
+        var
+            timerId,    // タイマーIDを格納するための変数をグローバルに定義
+            carousel;
 
-        Carousel.prototype = {
+        // カルーセルのメイン処理を定義
+        var mainProcessing = function ($moveElem, $li_length, options) {
+            // カルーセルの状態を管理するためのオブジェクト (クロージャ)
+            var state = {
+                counter: 0
+            };
 
-            constructor: Carousel,
+            // mainProcessingのメソッドを定義
+            return {
+                // スライドアニメーションメソッド
+                move: function (delay) {
+                    $moveElem.delay( (!delay) ? 0 : +delay ).animate({
+                        left: ( state.counter >= $li_length-1 ) ? "0px" : "-=" + parseInt(options.width, 10)+"px"
+                    },
+                    {
+                        duration: options.slideDuration,
+                        easing: options.slideEasing,
+                        queue: true,
+                        complete: function () {}
+                    });
 
-            mainProcessing: function () {
-                this.width;
-            }
+                    state.counter++;
+
+                    if ( state.counter > $li_length-1 ) {
+                        state.counter = 0;
+                    }
+                },
+
+                // ループメソッド
+                loop: function () {
+                    timerId = setInterval( function () { carousel.move(); }, options.slideDelay );
+                },
+
+                // ストップメソッド
+                stop: function () {
+                    clearInterval(timerId);
+                }
+            };
         };
 
         return $._fnCallMethods(methods, op);

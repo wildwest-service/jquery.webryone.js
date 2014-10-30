@@ -1,5 +1,5 @@
 /*
- * jquery.webryone.js v1.0.2
+ * jquery.webryone.js v1.0.3
  * https://github.com/webryone/jquery.webryone.js/
  * 
  * MIT licensed
@@ -30,6 +30,19 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                 return nameSpace.methods.init.apply( self, Array.prototype.slice.call( arguments, 1 ));
             } else {
                 $.error( "オプション: " + options + " は、" + nameSpace + " に存在しません" );
+            }
+        },
+
+        /**
+         * #jQueryメソッド定義時に使用する、メソッド呼び出し関数
+         * @param  {Object} methods メソッドが格納されたオブジェクト
+         * @param  {Object} options   オプションオブジェクトか、メソッド名
+         */
+        _fnCallMethods: function (methods, op) {
+            if ( typeof op === "object" || !op ) { //オプションがオブジェクト形式{}か、ない場合に、methods.init() を実行する。
+                return methods.init();
+            } else {    //それ以外なら、methods[op]()を実行する。
+                return methods[op]();
             }
         },
 
@@ -1566,334 +1579,242 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
     };
 
     /**
-     * #カルーセル
-     * @type {Object}
+     * #carousel
+     *
+     * $(".carousel-wrapper").carousel({
+     *     carouselContents: ".carousel-contents",
+     *     width:            "500px",
+     *     height:           "auto",
+     *     slideDelay:       3000,
+     *     slideDuration:    500,
+     *     slideEasing:      "swing",
+     *     autoHeight:       false,
+     *     canSwipe:         true,
+     *     showControl:      true,
+     *     controlPanel:     ".carousel-control",
+     *     controlNext:      ".carousel-control-next",
+     *     controlPrev:      ".carousel-control-prev",
+     *     showCurrent:      true,
+     *     fadeIn:           true,
+     *     fadeDuration:     500,
+     *     comebackDelay:    3000,
+     *     responsive:       true,
+     *     windowBreakPoint: 991,
+     *     showDescription:  true,
+     *     description:      ".carousel-description"
+     * });
+     * 
+     * @param  {Object} option 上記carouselオプションオブジェクト
+     * @return {Object}        jQueryObject
      */
-    var carousel = {};
+    $.fn.carousel = function (op) {
 
-    carousel.methods = {
+        // オプションのデフォルト値
+        $.fn.carousel.defaults = {
+            carouselContents:   ".carousel-contents",
+            width:              "200px",
+            height:             "auto",
+            slideDelay:         3000,
+            slideDuration:      500,
+            slideEasing:        "swing",
+            autoHeight:         true,
+            canSwipe:           true,
+            showControl:        true,
+            controlPanel:       ".carousel-control",
+            controlNext:        ".carousel-control-next",
+            controlPrev:        ".carousel-control-prev",
+            showCurrent:        true,
+            fadeIn:             true,
+            fadeDuration:       500,
+            comebackDelay:      3000,
+            responsive:         true,
+            windowBreakPoint:   991,
+            showDescription:    false,
+            description:        ".carousel-description"
+        };
 
-        init: function (options) {
+        // オプションをマージして保存する
+        var options = $.extend(true, {}, $.fn.carousel.defaults, op);
 
-            return this.each(function () {
-                _init(this);
-            });
+        // jQueryオブジェクトの参照
+        var that = this;
 
-            function Carousel(self, options) {
-                var
-                    width = ( $(self).parent().width() >= parseInt(options.width, 10) ) ? options.width : $(self).parent().width()+"px",
-                    height = options.height,
-                    slideDelay = options.slideDelay,
-                    slideDuration = options.slideDuration,
-                    slideEasing = options.slideEasing,
-                    autoHeight = options.autoHeight,
-                    canSwipe = options.canSwipe,
-                    showControl = options.showControl,
-                    $controlPanel = $(options.controlPanel),
-                    $controlNext = $(options.controlNext),
-                    $controlPrev = $(options.controlPrev),
-                    showCurrent = options.showCurrent,
-                    fadeIn = options.fadeIn,
-                    fadeDuration = options.fadeDuration,
-                    $wrapperElem = $(self),
-                    $ulElem = $wrapperElem.children(options.carouselContents),
-                    $liElems = $ulElem.children(),
-                    $imgElems = $liElems.find("img"),
-                    comebackDelay = options.comebackDelay,
-                    responsive = options.responsive,
-                    showDescription = options.showDescription,
-                    $description = $(options.description);
-                if ( showDescription ) {
-                    var
-                        $descriptionUl = $description.children("ul"),
-                        $descriptionLists = $descriptionUl.children();
+        // カルーセルに必要な変数を定義
+        var
+            $ul = that.children(options.carouselContents),
+            $li = $ul.children(),
+            $img = $li.find("img"),
+            $description = $(options.description);
+
+        if ( options.showDescription ) {
+            var
+                $descriptionUl = $description.children("ul"),
+                $descriptionLists = $descriptionUl.children();
+        }
+
+        // オプションに応じて実行するメソッドを定義
+        var methods = {
+            init: function () {
+                // styleの初期値設定
+                $img.css({
+                    width: options.width,
+                    height: options.height,
+                    margin: "0",
+                    padding: "0"
+                });
+
+                that.css({
+                    overflow: "hidden",
+                    width: options.width,
+                    height: $img.height()+"px",
+                    margin: "0",
+                    padding: "0"
+                });
+
+                $ul.css({
+                    position: "relative",
+                    listStyle: "none",
+                    margin: "0",
+                    padding: "0",
+                    width: parseInt(options.width, 10) * $li.length + "px",
+                    height: $img.height()+"px"
+                });
+
+                $li.css({
+                    float: "left",
+                    width: options.width,
+                    height: $img.height()+"px",
+                    margin: "0",
+                    padding: "0"
+                });
+
+                if ( options.showDescription ) {
+                    $descriptionUl.css({
+                        position: "relative",
+                        margin: "0",
+                        padding: "0",
+                        listStyle: "none"
+                    });
+
+                    $descriptionLists.not(":first").hide()
+                    .css({
+                        position: "absolute",
+                        top: 0,
+                        left: 0
+                    });
                 }
 
-                var
-                    WIDTH = parseInt(width, 10),
-                    slideWidth,
-                    slideCounter = 0,
-                    timerId_loop = null,
-                    timerId_comeback = null;
+                return that.each(function () {
+                    // 初期化
+                    carousel = mainProcessing($ul, $li.length, options);
 
-                var that = {
-                    setStyle: function () {
-                        var dfd = $.Deferred();
+                    // カルーセルをループ
+                    carousel.loop();
+                    
+                    // カルーセルのストップイベントをバインド
+                    that.on($.overEvt()+".stopCarousel", function () {
+                        carousel.stop();
+                    });
 
-                        $wrapperElem.css({
-                            position:   "relative",
-                            overflow:   "hidden",
-                            padding:    "0",
-                            width:      width
-                        });
+                    // カルーセルの再開イベントをバインド
+                    that.on($.outEvt()+".startCarousel", function () {
+                        setTimeout( carousel.loop, options.comebackDelay );
+                    });
 
-                        $ulElem.css({
-                            position:   "relative",
-                            listStyle:  "none",
-                            width:      parseInt(width, 10)*$liElems.length+"px",
-                            margin:     "0",
-                            padding:    "0",
-                            left:       "0"
-                        });
+                    // nextボタン押下時のイベントをバインド
+                    $(options.controlNext).on("click.nextClickCarousel", function () {
+                        ( !$ul.is(":animated") ) && carousel.move("0");
+                    })
+                    .on($.overEvt()+".stopCarousel", function () {  // nextボタンにホバー時にカルーセルをストップ
+                        carousel.stop();
+                    })
+                    .on($.outEvt()+".startCarousel", function () {  // nextボタンからアウト時にカルーセルを再開
+                        setTimeout( carousel.loop, options.comebackDelay );
+                    });
 
-                        $liElems.css({
-                            position:   "relative",
-                            float:      "left",
-                            margin:     "0",
-                            padding:    "0"
-                        }).each(function () {
-                            this.style[$.changeCss3PropToJsRef("box-sizing")] = "border-box";
-                        });
+                    // prevボタン押下時のイベントをバインド
+                    $(options.controlPrev).on("click.prevClickCarousel", function () {
+                        ( !$ul.is(":animated") ) && carousel.move("0", "prev");
+                    })
+                    .on($.overEvt()+".stopCarousel", function () {  // prevボタンにホバー時にカルーセルをストップ
+                        carousel.stop();
+                    })
+                    .on($.outEvt()+".startCarousel", function () {  // prevボタンからアウト時にカルーセルを再開
+                        setTimeout( carousel.loop, options.comebackDelay );
+                    });
+                });
+            }
+        };
 
-                        $imgElems.css({
-                            width:  width,
-                            height: height
-                        });
+        var
+            timerId,    // タイマーIDを格納するための変数をグローバルに定義
+            carousel;
 
-                        $controlPanel.css({
-                            position: "absolute",
-                            top: 0,
-                            left: 0
-                        });
+        // カルーセルのメイン処理を定義
+        var mainProcessing = function ($moveElem, $li_length, options) {
+            // カルーセルの状態を管理するためのオブジェクト (クロージャ)
+            var state = {
+                counter: 0,
+                loopFlag: false
+            };
 
-                        if ( showDescription ) {
-                            $descriptionUl.css({
-                                position: "relative",
-                                margin: "0",
-                                padding: "0",
-                                listStyle: "none"
-                            });
+            // mainProcessingのメソッドを定義
+            return {
+                // スライドアニメーションメソッド
+                move: function (delay, prev) {
+                    if (!prev) {
+                        var leftPosition = ( state.counter >= $li_length-1 ) ? "0px" : "-=" + options.width;
+                    } else {
+                        var leftPosition = ( state.counter <= 0 ) ? -parseInt(options.width, 10)*($li_length-1)+"px" : "+=" + options.width;
+                    }
 
-                            $descriptionLists.not(":first").hide()
-                            .css({
-                                position: "absolute",
-                                top: 0,
-                                left: 0
-                            });
-                        }
-
-                        dfd.resolve();
-
-                        return dfd.promise();
+                    $moveElem.delay( (!delay) ? 0 : +delay ).animate({  // スライドアニメーション
+                        left: leftPosition
                     },
+                    {
+                        duration: options.slideDuration,
+                        easing: options.slideEasing,
+                        queue: true,
+                        complete: function () {}
+                    });
 
-                    slide: function (action) {
+                    (!prev) ? state.counter++ : state.counter--;
 
-                        var ulElemLeftPosition = parseInt($ulElem.css("left"), 10);
+                    if (state.counter === -1 ) {
+                        state.counter = $li_length-1;
+                    }
+                    if ( state.counter > $li_length-1 ) {
+                        state.counter = 0;
+                    }
 
-                        switch ( action ) {
-                            case "loop": (function () {
-                                timerId_loop = setTimeout(function () { 
-                                    slideCounter++;
-                                    if ( slideCounter >= $liElems.length ) {
-                                        slideCounter = 0;
-                                    }
-                                    if ( ulElemLeftPosition <= -WIDTH*($liElems.length-1) ) {
-                                        slideWidth = "0px";
-                                    } else {
-                                        slideWidth = "-="+WIDTH;
-                                    }
-                                    $ulElem.stop(true, true);
-                                    $wrapperElem.stop(true, true);
-                                    that.move(slideDelay);
-                                }, slideDelay);
-                            })();
-                            break;
-
-                            case "next": (function () {
-                                clearTimeout(timerId_loop);
-                                clearTimeout(timerId_comeback);
-                                slideCounter++;
-                                if ( slideCounter >= $liElems.length ) {
-                                    slideCounter = 0;
-                                }
-                                if ( ulElemLeftPosition <= -WIDTH*($liElems.length-1) ) {
-                                    slideWidth = "0px";
-                                } else {
-                                    slideWidth = "-="+WIDTH;
-                                }
-                                $ulElem.stop(true, true);
-                                $wrapperElem.stop(true, true);
-                                that.move(0);
-                            })();
-                            break;
-
-                            case "prev": (function () {
-                                clearTimeout(timerId_loop);
-                                clearTimeout(timerId_comeback);
-                                slideCounter--;
-                                if ( slideCounter <= 0 ) {
-                                    slideCounter = 0;
-                                }
-                                if ( ulElemLeftPosition >= 0 || isNaN(ulElemLeftPosition) ) {
-                                    slideWidth = -WIDTH*($liElems.length-1)+"px";
-                                    slideCounter = $liElems.length-1;
-                                } else {
-                                    slideWidth = "+="+WIDTH;
-                                }
-                                $ulElem.stop(true, true);
-                                $wrapperElem.stop(true, true);
-                                that.move(0);
-                            })();
-                            break;
-
-                            case "stop": (function () {
-                                clearTimeout(timerId_loop);
-                                clearTimeout(timerId_comeback);
-                            })();
-                            break;
-
-                            case "start": (function () {
-                                that.slide("loop");
-                            })();
-                            break;
-                        }
-                    },
-
-                    move: function (delay) {
-                        if ( !delay ) {
-                            $controlNext.data("carousel-loop", false);
-                            animation();
-                        } else {
-                            $controlNext.data("carousel-loop", true);
-                            animation();
-                        }
-
-                        function animation () {
-                            $ulElem.animate({
-                                left: slideWidth,
-                            },
-                            {
-                                duration: slideDuration,
-                                easing: slideEasing,
-                                queue: true,
-                                complete: function () {
-                                    if ( !autoHeight ) {
-                                        if ( !delay ) {
-                                            timerId_comeback = setTimeout(function () { that.slide("loop"); }, comebackDelay);
-                                        }
-                                        ( $controlNext.data("carousel-loop") ) && that.slide("loop");
-                                    }
-                                }
-                            });
-
-                            if ( autoHeight ) {
-                                $wrapperElem.animate({
-                                    height: $($imgElems[slideCounter]).height()+"px"
-                                },
-                                {
-                                    duration: slideDuration,
-                                    easing: slideEasing,
-                                    queue: true,
-                                    complete: function () {
-                                        if ( !delay ) {
-                                            timerId_comeback = setTimeout(function () { that.slide("loop"); }, comebackDelay);
-                                        }
-                                        ( $controlNext.data("carousel-loop") ) && that.slide("loop");
-                                    }
-                                });
-                            }
-
-                            if ( showDescription ) {
-                                $descriptionLists.not($($descriptionLists[slideCounter])).fadeOut(slideDuration, function () {
-                                    $($descriptionLists[slideCounter]).fadeIn(slideDuration);
-                                });
-                            }
-                        }
-                    },
-
-                    control: function () {
-                        var dfd = $.Deferred();
-
-                        var canClickFlag = true;
-
-                        $controlNext.on("click.carouselNext", function () {
-                            if( !$ulElem.is(":animated") ) {
-                                that.slide("next");
-                            }
-                            return false;
-                        });
-
-                        $controlPrev.on("click.carouselPrev", function () {
-                            if( !$ulElem.is(":animated") ) {
-                                that.slide("prev");
-                            }
-                            return false;
-                        });
-
-                        $imgElems.on($.overEvt()+".carouselStop", function () {
-                            that.slide("stop");
-                        });
-
-                        $imgElems.on($.outEvt()+".carouselStart", function () {
-                            that.slide("start");
-                        });
-
-                        if (responsive) {
-                            $(window).on($.resizeEvt()+".carouselResponsive", function () {
-                                if( !$ulElem.is(":animated") ) {
-                                    width = $wrapperElem.parent().width()+"px";
-                                    WIDTH = $wrapperElem.parent().width();
-                                    slideCounter = 0;
-                                    that.setStyle().done(function () {
-                                        that.slide("stop");
-                                        that.slide("loop");
-                                    });
-                                }
-                            });
-                        }
-
-                        dfd.resolve();
-
-                        return dfd.promise();
-                    },
-
-                    init: function () {
-                        that.setStyle().done(that.control).done(function () {
-                            that.slide("loop");
-                            (!showControl) && $controlPanel.hide();
-                            (fadeIn) && $wrapperElem.fadeIn(fadeDuration);
+                    if ( options.showDescription ) {    //descriptionのフェード効果
+                        $descriptionLists.not($($descriptionLists[state.counter])).fadeOut(options.slideDuration, function () {
+                            $($descriptionLists[state.counter]).fadeIn(options.slideDuration);
                         });
                     }
-                };
+                },
 
-                return that;
-            }
+                // ループメソッド
+                loop: function () {
+                    if (!state.loopFlag) {
+                        timerId = setInterval( function () { carousel.move(); }, options.slideDelay );
+                    }
 
-            function _init(self) {
-                var _settings = $.extend({
-                    carouselContents:   ".carousel-contents",
-                    width:              "200px",
-                    height:             "auto",
-                    slideDelay:         3000,
-                    slideDuration:      500,
-                    slideEasing:        "swing",
-                    autoHeight:         true,
-                    canSwipe:           true,
-                    showControl:        true,
-                    controlPanel:       ".carousel-control",
-                    controlNext:        ".carousel-control-next",
-                    controlPrev:        ".carousel-control-prev",
-                    showCurrent:        true,
-                    fadeIn:             true,
-                    fadeDuration:       500,
-                    comebackDelay:      3000,
-                    responsive:         true,
-                    showDescription:    false,
-                    description:        ".carousel-current-description"
-                }, options);
+                    state.loopFlag = true;
+                },
 
-                (_settings.fadeIn) && $(self).hide();
+                // ストップメソッド
+                stop: function () {
+                    if (state.loopFlag) {
+                        clearInterval(timerId);
+                    }
 
-                var that = Carousel(self, _settings);
+                    state.loopFlag = false;
+                }
+            };
+        };
 
-                that.init();
-            }
-        }
-    };
-
-    $.fn.carousel = function (options) {
-        return $._callMethods( carousel, options, this );
+        return $._fnCallMethods(methods, op);
     };
 
 })(jQuery);

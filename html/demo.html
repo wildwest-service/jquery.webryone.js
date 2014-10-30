@@ -46,6 +46,15 @@
                 <a class="carousel-control-prev" href="#">&lt;</a>
                 <a class="carousel-control-next" href="#">&gt;</a>
             </div>
+
+            <div class="text">
+                <ul>
+                    <li>説明テスト1</li>
+                    <li>説明テスト2</li>
+                    <li>説明テスト3</li>
+                    <li>説明テスト4</li>
+                </ul>
+            </div>
         </div><!-- /.carousel -->
     </div><!-- /.indexOpeningWrapper -->
     
@@ -60,28 +69,30 @@
     <script src="../carousel/jquery.webryone.carousel.js"></script>
 
     <script>
-        // $(".indexOpeningWrapper .carousel-wrapper").carousel("test");
-        $(".indexOpeningWrapper .carousel-wrapper").carousel({
-            carouselContents: ".indexOpeningWrapper .carousel-contents",
-            width: "400px",
-            height: "auto",
-            slideDelay: 3000,
-            slideDuration: 500,
-            slideEasing: "swing",
-            autoHeight: false,
-            canSwipe: true,
-            showControl: true,
-            controlPanel: ".indexOpeningWrapper .carousel-control",
-            controlNext: ".indexOpeningWrapper .carousel-control-next",
-            controlPrev: ".indexOpeningWrapper .carousel-control-prev",
-            showCurrent: true,
-            fadeIn: true,
-            fadeDuration: 500,
-            comebackDelay: 3000,
-            responsive: true,
-            windowBreakPoint: 991,
-            showDescription:    true,
-            description:        ".indexOpeningWrapper .carousel .text"
+        jQuery(function ($) {
+            // $(".indexOpeningWrapper .carousel-wrapper").carousel("test");
+            $(".indexOpeningWrapper .carousel-wrapper").carousel({
+                carouselContents: ".indexOpeningWrapper .carousel-contents",
+                width: "400px",
+                height: "auto",
+                slideDelay: 3000,
+                slideDuration: 500,
+                slideEasing: "swing",
+                autoHeight: false,
+                canSwipe: true,
+                showControl: true,
+                controlPanel: ".indexOpeningWrapper .carousel-control",
+                controlNext: ".indexOpeningWrapper .carousel-control-next",
+                controlPrev: ".indexOpeningWrapper .carousel-control-prev",
+                showCurrent: true,
+                fadeIn: true,
+                fadeDuration: 500,
+                comebackDelay: 3000,
+                responsive: true,
+                windowBreakPoint: 991,
+                showDescription:    true,
+                description:        ".indexOpeningWrapper .carousel .text"
+            });
         });
     </script>
 </body>

@@ -77,15 +77,22 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
         // jQueryオブジェクトの参照
         var that = this;
 
+        // カルーセルに必要な変数を定義
+        var
+            $ul = that.children(options.carouselContents),
+            $li = $ul.children(),
+            $img = $li.find("img"),
+            $description = $(options.description);
+
+        if ( options.showDescription ) {
+            var
+                $descriptionUl = $description.children("ul"),
+                $descriptionLists = $descriptionUl.children();
+        }
+
         // オプションに応じて実行するメソッドを定義
         var methods = {
             init: function () {
-                // カルーセルに必要な変数を定義
-                var
-                    $ul = that.children(options.carouselContents),
-                    $li = $ul.children(),
-                    $img = $li.find("img");
-
                 // styleの初期値設定
                 $img.css({
                     width: options.width,
@@ -119,9 +126,21 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                     padding: "0"
                 });
 
-                $(options.controlPanel).css({
+                if ( options.showDescription ) {
+                    $descriptionUl.css({
+                        position: "relative",
+                        margin: "0",
+                        padding: "0",
+                        listStyle: "none"
+                    });
 
-                });
+                    $descriptionLists.not(":first").hide()
+                    .css({
+                        position: "absolute",
+                        top: 0,
+                        left: 0
+                    });
+                }
 
                 return that.each(function () {
                     // 初期化
@@ -187,7 +206,7 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                         var leftPosition = ( state.counter <= 0 ) ? -parseInt(options.width, 10)*($li_length-1)+"px" : "+=" + options.width;
                     }
 
-                    $moveElem.delay( (!delay) ? 0 : +delay ).animate({
+                    $moveElem.delay( (!delay) ? 0 : +delay ).animate({  // スライドアニメーション
                         left: leftPosition
                     },
                     {
@@ -204,6 +223,12 @@ if ( (function () { "use strict"; return this===undefined; })() ) { (function ()
                     }
                     if ( state.counter > $li_length-1 ) {
                         state.counter = 0;
+                    }
+
+                    if ( options.showDescription ) {    //descriptionのフェード効果
+                        $descriptionLists.not($($descriptionLists[state.counter])).fadeOut(options.slideDuration, function () {
+                            $($descriptionLists[state.counter]).fadeIn(options.slideDuration);
+                        });
                     }
                 },
 
